@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GlobalSetting {
+  id                    String   @id @default(cuid())
+  master_google_sheet_id String?
+  updatedAt             DateTime @updatedAt
+}
+
+model Form {
+  id                    String     @id @default(cuid())
+  form_id               String     @unique // e.g., MASTERS_UK, BACHELORS_UG
+  form_name             String     // e.g., Masters Lead Form
+  status                String     @default("ACTIVE") // ACTIVE or INACTIVE
+  target_sheet_tab_name  String?    // The exact name of the tab in the spreadsheet
+  
+  // Customizable UI fields
+  theme_color           String?    @default("#0A369D")
+  background_style      String?    @default("solid") // 'solid', 'london_art', 'abstract'
+  success_title         String?    @default("Thanks!")
+  success_description   String?    @default("We've received your info.\nA counselor will call you shortly.")
+  whatsapp_number       String?    @default("+447441394235")
+
+  // Product Card fields (for the public products page)
+  country               String?    // e.g., "United Kingdom"
+  university_name       String?    // e.g., "University of Westminster"
+  tuition_fee           String?    // e.g., "£12,000/year"
+  scholarship           String?    // e.g., "Up to £5,000"
+  cash_deposit          String?    // e.g., "£2,500"
+  duration              String?    // e.g., "1 Year"
+  product_image_url     String?    // URL or /public path for the product card image
+  bg_image_url          String?    // Full background image for the product card
+  
+  // Social / redirect links (used on success page)
+  facebook_page_url     String?    @default("https://www.facebook.com/uniglobeeducation")
+  products_page_url     String?    @default("/")
+
+  // Office location for Google Maps — 'dhaka' or 'sylhet'
+  office_location       String?    @default("dhaka")
+
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  questions             Question[]
+  leads                 Lead[]
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  form        Form     @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  form_id     String
+  key         String   // The internal column/input name, e.g. "preferred_course"
+  label       String   // "Preferred Course?"
+  type        String   // mcq, dropdown, short_text, paragraph, phone, email
+  required    Boolean  @default(false)
+  options     String?  // Pipe-separated options, e.g. "MBA|MSc|MRes"
+  order       Int      @default(0)
+  enabled     Boolean  @default(true)
+  placeholder String?
+  help_text   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([form_id, key])
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  lead_id           String   @unique // e.g. UG-20260224-000123
+  form              Form     @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  form_id           String
+  
+  // Base fields
+  phone             String?
+  platform          String?
+  is_organic        String? // Boolean-ish string from ads
+  campaign_id       String?
+  campaign_name     String?
+  adset_id          String?
+  adset_name        String?
+  ad_id             String?
+  ad_name           String?
+  utm_source        String?
+  utm_medium        String?
+  utm_campaign      String?
+  utm_term          String?
+  utm_content       String?
+  fbclid            String?
+  fbp               String?  // _fbp
+  fbc               String?
+  landing_page      String?
+  
+  // Dynamic JSON Answers mapped by question key
+  answers           String?  // JSON string, optional until submitted
+  
+  // Idempotency & State
+  submissionId      String?  @unique // Client-generated UUID for idempotency
+  status            String   @default("DRAFT") // DRAFT or SUBMITTED
+  
+  // CRM Tracking
+  duplication_check String?
+  pushed_to_sheet   Boolean  @default(false)
+  
+  // Geographic location of the user at time of submission
+  user_lat          Float?
+  user_lon          Float?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  sheetPushJob      SheetPushJob?
+}
+
+model SheetPushJob {
+  id              String   @id @default(cuid())
+  leadId          String   @unique
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status          String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  attempts        Int      @default(0)
+  lastError       String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Admin-managed physical office locations
+model Office {
+  id        String   @id @default(cuid())
+  name      String   // "Dhaka Office"
+  address   String   // Multi-line street address
+  maps_url  String   // Google Maps short/full link
+  lat       Float    // Latitude for nearest-office calculation
+  lon       Float    // Longitude for nearest-office calculation
+  enabled   Boolean  @default(true)
+  order     Int      @default(0) // Display order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

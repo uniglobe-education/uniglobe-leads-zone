@@ -1,0 +1,335 @@
+<script>
+    class StepperController {
+        constructor() {
+            this.questions = [];
+            this.currentStepIndex = 0;
+            this.answers = {};
+            this.urlParams = this.extractUrlParams();
+            this.isSubmitting = false;
+
+            // Grab formId from URL or fallback to the server-injected script var
+            this.formId = this.urlParams['form_id'] || window.SERVER_FORM_ID || null;
+
+            // UI Elements
+            this.els = {
+                loader: document.getElementById('loader'),
+                content: document.getElementById('step-content'),
+                nav: document.getElementById('navigation'),
+                progressContainer: document.getElementById('progress-container'),
+                stepText: document.getElementById('step-text'),
+                progressFill: document.getElementById('progress-bar-fill'),
+                btnBack: document.getElementById('btn-back'),
+                btnNext: document.getElementById('btn-next'),
+                successMsg: document.getElementById('success-message')
+            };
+
+            this.bindEvents();
+            this.init();
+        }
+
+        extractUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const result = {};
+            const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ad_id', 'adset_id', 'campaign_id', '_fbp', 'fbc', 'landing_page', 'form_id'];
+            for (const key of keys) {
+                if (params.get(key)) {
+                    result[key] = params.get(key);
+                }
+            }
+
+            if (!result['landing_page']) {
+                result['landing_page'] = window.location.href.split('?')[0];
+            }
+
+            return result;
+        }
+
+        bindEvents() {
+            this.els.btnNext.addEventListener('click', () => this.handleNext());
+            this.els.btnBack.addEventListener('click', () => this.handleBack());
+
+            // global form listener (for inputs)
+            this.els.content.addEventListener('input', (e) => {
+                if (e.target.tagName !== 'BUTTON') {
+                    this.validateCurrentStep();
+                }
+            });
+            this.els.content.addEventListener('change', (e) => {
+                this.validateCurrentStep();
+            });
+        }
+
+        init() {
+            if (!this.formId) {
+                this.els.loader.innerHTML = "<p style='color: var(--error-color);'>Error: Missing form_id in URL.</p>";
+                return;
+            }
+            this.fetchData();
+        }
+
+        fetchData() {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler((response) => {
+                        try {
+                            const data = JSON.parse(response);
+                            if (data.error) throw new Error(data.error);
+                            this.questions = data.questions || [];
+                            this.initForm();
+                        } catch (e) {
+                            console.error("Parse Error", e);
+                            this.els.loader.innerHTML = `<p style='color: var(--error-color);'>Error: ${e.message || 'Failed to load'}</p>`;
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        console.error("Fetch error", err);
+                        this.els.loader.innerHTML = "<p style='color: var(--error-color);'>Error loading questions. Please reload.</p>";
+                    })
+                    .doGet({ parameter: { route: 'api_questions', form_id: this.formId } });
+            } else {
+                // Dummy data for local preview / testing
+                this.questions = [
+                    { key: 'first_name', label: 'What is your First Name?', type: 'short_text', required: true },
+                    { key: 'phone', label: 'What is your Phone Number?', type: 'phone', required: true },
+                    { key: 'preferred_course', label: 'Preferred Course?', type: 'dropdown', required: true, options: ['Bachelors', 'Masters', 'Foundation'] },
+                    { key: 'destination', label: 'Preferred Destination?', type: 'mcq', required: true, options: ['UK', 'Canada', 'Australia', 'Other'] }
+                ];
+                setTimeout(() => this.initForm(), 800);
+            }
+        }
+
+        initForm() {
+            if (this.questions.length === 0) {
+                this.els.loader.innerHTML = "<p style='color: var(--error-color);'>No questions configured for this form.</p>";
+                return;
+            }
+            this.els.loader.style.display = 'none';
+            this.els.progressContainer.style.display = 'block';
+            this.els.content.style.display = 'block';
+            this.els.nav.style.display = 'flex';
+            this.renderStep();
+        }
+
+        renderStep() {
+            const isReviewStep = this.currentStepIndex === this.questions.length;
+
+            // Update Progress
+            const stepCount = this.questions.length + 1; // +1 for review
+            this.els.stepText.textContent = `Step ${this.currentStepIndex + 1} of ${stepCount}`;
+            this.els.progressFill.style.width = `${((this.currentStepIndex + 1) / stepCount) * 100}%`;
+
+            // Update Navigation
+            this.els.btnBack.style.visibility = this.currentStepIndex > 0 ? 'visible' : 'hidden';
+
+            // Handle Review Step
+            if (isReviewStep) {
+                this.renderReview();
+                this.els.btnNext.textContent = 'Submit';
+                this.els.btnNext.disabled = false;
+                return;
+            }
+
+            this.els.btnNext.textContent = 'Next \u2192';
+
+            const q = this.questions[this.currentStepIndex];
+            const savedValue = this.answers[q.key] || '';
+
+            let html = `
+      <div class="fade-in">
+        <h2 class="question-label">${q.label}</h2>
+        ${q.help_text ? `<p class="help-text">${q.help_text}</p>` : ''}
+    `;
+
+            if (q.type === 'mcq') {
+                html += `<div class="mcq-group">`;
+                q.options.forEach(opt => {
+                    const isSelected = savedValue === opt;
+                    html += `<button type="button" class="mcq-btn ${isSelected ? 'selected' : ''}" data-value="${opt}">
+                  ${opt}
+                 </button>`;
+                });
+                html += `</div>`;
+            } else if (q.type === 'dropdown') {
+                html += `
+        <div class="input-group">
+          <select id="input_${q.key}" ${q.required ? 'required' : ''}>
+            <option value="" disabled ${!savedValue ? 'selected' : ''}>${q.placeholder || 'Select an option'}</option>
+            ${q.options.map(opt => `<option value="${opt}" ${savedValue === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+          </select>
+        </div>
+      `;
+            } else if (q.type === 'paragraph') {
+                html += `
+        <div class="input-group">
+          <textarea id="input_${q.key}" placeholder="${q.placeholder || ''}" ${q.required ? 'required' : ''}>${savedValue}</textarea>
+        </div>
+      `;
+            } else { // short_text, phone, email
+                const inputType = q.type === 'phone' ? 'tel' : (q.type === 'email' ? 'email' : 'text');
+                const extraAttrs = q.type === 'phone' ? 'pattern="[0-9\\+\\-\\s()]+" title="Valid phone number"' : '';
+                html += `
+        <div class="input-group">
+          <input type="${inputType}" id="input_${q.key}" placeholder="${q.placeholder || ''}" value="${savedValue}" ${q.required ? 'required' : ''} ${extraAttrs}>
+        </div>
+      `;
+            }
+
+            html += `</div>`;
+            this.els.content.innerHTML = html;
+
+            // Add MCQ listeners
+            if (q.type === 'mcq') {
+                const btns = this.els.content.querySelectorAll('.mcq-btn');
+                btns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        btns.forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        this.answers[q.key] = btn.dataset.value;
+                        this.els.btnNext.disabled = false;
+                        // Auto advance on tap
+                        setTimeout(() => this.handleNext(), 250);
+                    });
+                });
+            }
+
+            this.validateCurrentStep();
+
+            // Focus first input (except on mobile devices)
+            if (window.innerWidth >= 768) {
+                const firstInput = this.els.content.querySelector('input, select, textarea');
+                if (firstInput) firstInput.focus();
+            }
+        }
+
+        renderReview() {
+            let html = `<div class="fade-in">
+      <h2 class="question-label">Review your details</h2>
+      <p class="help-text" style="margin-bottom: 16px;">Please verify your information before submitting.</p>
+      <div style="background:var(--secondary-color); border: 1px solid var(--border-color); border-radius:12px; padding:20px; text-align: left;">
+    `;
+
+            this.questions.forEach(q => {
+                const val = this.answers[q.key] || '<span style="color:#94a3b8;">Not provided</span>';
+                html += `
+        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+          <div style="font-size:0.875rem; color:var(--text-light); margin-bottom: 4px;">${q.label}</div>
+          <div style="font-weight:500; color:var(--text-dark);">${val}</div>
+        </div>
+      `;
+            });
+
+            html += `</div></div>`;
+            this.els.content.innerHTML = html;
+        }
+
+        validateCurrentStep() {
+            if (this.currentStepIndex === this.questions.length) return; // Review step
+
+            const q = this.questions[this.currentStepIndex];
+            let isValid = true;
+
+            if (q.type === 'mcq') {
+                isValid = !q.required || !!this.answers[q.key];
+            } else {
+                const input = document.getElementById(`input_${q.key}`);
+                if (input) {
+                    isValid = !q.required || input.value.trim().length > 0;
+                    if (isValid && q.type === 'phone' && input.value.trim().length > 0) {
+                        // Optional: Add basic phone length validation here, e.g. min 6 digits
+                        isValid = input.value.trim().replace(/[^0-9]/g, '').length >= 6;
+                    }
+                    if (isValid && q.type === 'email' && input.value.trim().length > 0) {
+                        // Basic email format check
+                        isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+                    }
+                    this.answers[q.key] = input.value.trim();
+                }
+            }
+
+            this.els.btnNext.disabled = !isValid;
+        }
+
+        handleNext() {
+            if (this.els.btnNext.disabled || this.isSubmitting) return;
+
+            if (this.currentStepIndex === this.questions.length) {
+                this.submitForm();
+            } else {
+                this.currentStepIndex++;
+                this.renderStep();
+            }
+        }
+
+        handleBack() {
+            if (this.currentStepIndex > 0 && !this.isSubmitting) {
+                this.currentStepIndex--;
+                this.renderStep();
+            }
+        }
+
+        submitForm() {
+            this.isSubmitting = true;
+            this.els.btnNext.disabled = true;
+            this.els.btnNext.textContent = 'Submitting...';
+            this.els.btnBack.style.visibility = 'hidden';
+
+            const payload = {
+                formId: this.formId,
+                answers: this.answers,
+                urlParams: this.urlParams
+            };
+
+            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+                console.log('Simulating submission:', payload);
+                setTimeout(() => this.showSuccess(), 1500);
+                return;
+            }
+
+            fetch(window.location.href, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                },
+                body: JSON.stringify(payload)
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.showSuccess();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error occurred.'));
+                        this.resetSubmitState();
+                    }
+                })
+                .catch(err => {
+                    console.error("Submission Error: ", err);
+                    alert('Network error. Please try again or check your connection.');
+                    this.resetSubmitState();
+                });
+        }
+
+        resetSubmitState() {
+            this.isSubmitting = false;
+            this.els.btnNext.disabled = false;
+            this.els.btnNext.textContent = 'Submit';
+            this.els.btnBack.style.visibility = 'visible';
+        }
+
+        showSuccess() {
+            this.els.content.style.display = 'none';
+            this.els.nav.style.display = 'none';
+            this.els.progressContainer.style.display = 'none';
+            this.els.stepText.style.display = 'none';
+            this.els.successMsg.style.display = 'block';
+
+            // Trigger success tracking pixel or events if needed
+            if (typeof fbq === 'function') {
+                fbq('track', 'Lead');
+            }
+        }
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        new StepperController();
+    });
+</script>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <!-- Inline CSS to avoid separate stylesheet requests -->
+  <?!= include('style'); ?>
+  <!-- Preload fonts to avoid FOUT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Inject server-side variables -->
+  <script>
+    window.SERVER_FORM_ID = <?= JSON.stringify(formId) ?>;
+  </script>
+
+  <div id="app" class="app-container">
+    <div class="header">
+      <div class="logo">UniGlobe Education</div>
+      <h1 class="title">Free Study Consultation</h1>
+      <p class="subtitle">Takes 30–60 seconds</p>
+    </div>
+
+    <div id="progress-container" class="progress-section" style="display: none;">
+      <div class="step-text" id="step-text">Step 1 of X</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+      </div>
+    </div>
+
+    <div id="card-container" class="card">
+      <div id="loader" class="loader-container">
+        <div class="spinner"></div>
+        <p>Loading questions...</p>
+      </div>
+
+      <!-- Steps will be injected here -->
+      <div id="step-content" class="step-content" style="display: none;"></div>
+
+      <!-- Success State -->
+      <div id="success-message" class="success-message" style="display: none;">
+        <div class="success-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2>Thanks! We received your info.</h2>
+        <p>A counselor will call you soon.</p>
+        <div class="action-buttons-vertical">
+          <a href="https://api.whatsapp.com/send/?phone=447441394235" target="_blank"
+            class="btn btn-primary btn-block">Chat on WhatsApp</a>
+          <a href="https://uniglobeeducation.co.uk" class="btn btn-secondary btn-block">Back to website</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="navigation" class="navigation" style="display: none;">
+      <button id="btn-back" class="btn btn-secondary" style="visibility: hidden;">&larr; Back</button>
+      <button id="btn-next" class="btn btn-primary" disabled>Next &rarr;</button>
+    </div>
+
+    <div class="footer">
+      <p><strong>Serving since 2007</strong></p>
+      <p>Kha-215, Merul Badda (Beside BRAC University)</p>
+      <p><a href="https://uniglobeeducation.co.uk" target="_blank">uniglobeeducation.co.uk</a></p>
+    </div>
+  </div>
+
+  <?!= include('app.js'); ?>
+</body>
+
+</html>
