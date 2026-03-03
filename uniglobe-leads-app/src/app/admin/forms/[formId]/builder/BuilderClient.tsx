@@ -202,7 +202,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         <select
                                             value={q.type}
                                             onChange={(e) => updateQuestion(q.id, 'type', e.target.value)}
-                                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm"
+                                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm text-slate-800"
                                         >
                                             <option value="short_text">Short Text</option>
                                             <option value="paragraph">Paragraph</option>
@@ -219,7 +219,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                             value={q.key}
                                             onChange={(e) => updateQuestion(q.id, 'key', e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase())}
                                             placeholder="e.g. first_name"
-                                            className="w-full p-2.5 border border-red-200 bg-red-50 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono"
+                                            className="w-full p-2.5 border border-red-200 bg-red-50 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono text-slate-800"
                                         />
                                         <p className="text-[10px] text-slate-400 mt-1">Changes to this key will map answers to a new column in Sheets.</p>
                                     </div>
@@ -232,7 +232,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                                 value={q.options}
                                                 onChange={(e) => updateQuestion(q.id, 'options', e.target.value)}
                                                 placeholder="e.g. Option A|Option B|Option C"
-                                                className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm font-mono"
+                                                className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm font-mono text-slate-800"
                                             />
                                         </div>
                                     )}
