@@ -566,6 +566,21 @@ export default function ApplyForm() {
             if (isValid && currentQ.type === 'email' && val.trim().length > 0) {
                 isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
             }
+
+            // Number validation — must be a valid number, optionally within min|max from options
+            if (isValid && currentQ.type === 'number' && val.trim().length > 0) {
+                const num = parseFloat(val.trim());
+                if (isNaN(num)) {
+                    isValid = false;
+                } else if (currentQ.options) {
+                    const [minStr, maxStr] = currentQ.options.split('|');
+                    const min = parseFloat(minStr);
+                    const max = parseFloat(maxStr);
+                    if (!isNaN(min) && !isNaN(max) && (num < min || num > max)) {
+                        isValid = false;
+                    }
+                }
+            }
         }
     }
 
@@ -696,7 +711,7 @@ export default function ApplyForm() {
                                                 </select>
                                             )}
 
-                                            {['short_text', 'phone', 'email'].includes(currentQ.type) && (
+                                            {['short_text', 'number', 'phone', 'email'].includes(currentQ.type) && (
                                                 <div className="relative">
                                                     {currentQ.type === 'phone' ? (
                                                         <div className={`flex rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] overflow-hidden shadow-sm transition-all focus-within:ring-4 ${!isValid && touchedFields[currentQ.key] ? 'border-red-400 focus-within:ring-red-100 focus-within:border-red-500' : 'border-slate-100 hover:border-slate-300 focus-within:border-(--theme-color)'}`}>
@@ -772,6 +787,58 @@ export default function ApplyForm() {
                                                                     }, 300);
                                                                 }}
                                                             />
+                                                        </div>
+                                                    ) : currentQ.type === 'number' ? (
+                                                        // ── Number Input (IELTS score, GPA, etc.) ──────────────
+                                                        <div className="relative">
+                                                            <input
+                                                                autoFocus
+                                                                type="text"
+                                                                inputMode="decimal"
+                                                                enterKeyHint="next"
+                                                                onKeyDown={(e) => {
+                                                                    // Allow: digits, dot, backspace, delete, arrows, tab
+                                                                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) {
+                                                                        e.preventDefault();
+                                                                    }
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        setTouchedFields({ ...touchedFields, [currentQ.key]: true });
+                                                                        if (isValid && !isSubmitting) handleNext();
+                                                                    }
+                                                                }}
+                                                                placeholder={currentQ.placeholder || ((() => {
+                                                                    // Try to derive placeholder from min|max options
+                                                                    const [mn, mx] = (currentQ.options || '').split('|').map(Number);
+                                                                    if (!isNaN(mn) && !isNaN(mx)) return `${mn} – ${mx}`;
+                                                                    return 'e.g. 6.5';
+                                                                })())}
+                                                                value={answers[currentQ.key] || ''}
+                                                                onChange={(e) => {
+                                                                    const raw = e.target.value;
+                                                                    // Allow only valid numeric pattern
+                                                                    if (/^\d*\.?\d*$/.test(raw)) {
+                                                                        setAnswers({ ...answers, [currentQ.key]: raw });
+                                                                    }
+                                                                }}
+                                                                className={`w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[16px] sm:text-[17px] outline-none transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium ${!isValid && touchedFields[currentQ.key]
+                                                                    ? 'border-red-400 focus:ring-4 focus:ring-red-100'
+                                                                    : 'border-slate-100 hover:border-slate-300 focus:ring-4'
+                                                                    }`}
+                                                                onBlur={() => setTouchedFields({ ...touchedFields, [currentQ.key]: true })}
+                                                            />
+                                                            {/* Range hint badge */}
+                                                            {currentQ.options && (currentQ.options.split('|').length === 2) && (() => {
+                                                                const [mn, mx] = currentQ.options.split('|').map(Number);
+                                                                if (!isNaN(mn) && !isNaN(mx)) {
+                                                                    return (
+                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full pointer-events-none">
+                                                                            {mn}–{mx}
+                                                                        </span>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })()}
                                                         </div>
                                                     ) : (
                                                         <input

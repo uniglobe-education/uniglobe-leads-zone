@@ -205,6 +205,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                             className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm text-slate-800"
                                         >
                                             <option value="short_text">Short Text</option>
+                                            <option value="number">Number (e.g. IELTS score)</option>
                                             <option value="paragraph">Paragraph</option>
                                             <option value="email">Email</option>
                                             <option value="phone">Phone</option>
