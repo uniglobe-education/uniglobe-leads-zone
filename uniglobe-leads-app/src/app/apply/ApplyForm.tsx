@@ -423,7 +423,7 @@ export default function ApplyForm() {
         } else {
             isValid = !currentQ.required || val.trim().length > 0;
 
-            // Phone Validation — simple digit count, no external library
+            // Phone Validation — digit count + carrier prefix check
             if (isValid && currentQ.type === 'phone' && val.trim().length > 0) {
                 const cleanPhone = val.trim();
                 const isTouched = touchedFields[currentQ.key];
@@ -443,13 +443,95 @@ export default function ApplyForm() {
                     '+61': 9,   // Australia
                     '+971': 9,  // UAE
                     '+966': 9,  // Saudi
-                    '+60': 9,   // Malaysia (9-10)
-                    '+49': 10,  // Germany (10-11)
+                    '+60': 9,   // Malaysia
+                    '+49': 10,  // Germany
                     '+65': 8,   // Singapore
                     '+64': 9,   // NZ
                     '+977': 10, // Nepal
                     '+94': 9,   // Sri Lanka
+                    '+353': 9,  // Ireland
                 };
+
+                // ── Carrier/operator prefix rules per country ──────────────────
+                // Key: country code  → { valid: string[], name: string }
+                // Prefixes are the first N digits of subscriber number (without leading 0)
+                const carrierPrefixes: Record<string, { valid: string[]; label: string }> = {
+                    '+880': {
+                        label: 'BD',
+                        // Subscriber starts with 1, then operator digit:
+                        // 013x Grameenphone, 017x Grameenphone
+                        // 016x Airtel→Robi,  018x Robi
+                        // 014x Banglalink,   019x Banglalink
+                        // 015x Teletalk
+                        // 011x, 012x Citycell (defunct but still store numbers)
+                        valid: ['11', '12', '13', '14', '15', '16', '17', '18', '19'],
+                        // Subscriber must start with "1" + one of the above second digits
+                    },
+                    '+91': {
+                        label: 'IN',
+                        // India: subscriber must start with 6,7,8,9
+                        valid: ['6', '7', '8', '9'],
+                    },
+                    '+92': {
+                        label: 'PK',
+                        // Pakistan: subscriber must start with 3
+                        valid: ['3'],
+                    },
+                    '+44': {
+                        label: 'UK',
+                        // UK mobile: starts with 07 → subscriber starts with 7
+                        valid: ['7'],
+                    },
+                    '+971': {
+                        label: 'AE',
+                        // UAE mobile: 050,052,054,055,056,058 → subscriber starts with 5
+                        valid: ['5'],
+                    },
+                    '+966': {
+                        label: 'SA',
+                        // Saudi mobile: subscriber starts with 5
+                        valid: ['5'],
+                    },
+                    '+977': {
+                        label: 'NP',
+                        // Nepal: subscriber starts with 97, 98
+                        valid: ['97', '98'],
+                    },
+                    '+94': {
+                        label: 'LK',
+                        // Sri Lanka mobile: starts with 7
+                        valid: ['7'],
+                    },
+                };
+
+                // ── Helper: check carrier prefix ───────────────────────────────
+                const checkCarrierPrefix = (): string | null => {
+                    const rule = carrierPrefixes[selectedCode];
+                    if (!rule || subscriberDigits.length < 2) return null; // not enough digits yet
+
+                    // For BD specifically: subscriber is "1XXXXXXXXX", prefix check = chars 0-1
+                    // e.g. "1711234567" → prefix "17" must be in valid list
+                    const prefixLen = rule.valid[0]?.length ?? 1;
+                    const prefix = subscriberDigits.substring(0, prefixLen);
+
+                    if (!rule.valid.includes(prefix)) {
+                        // Build operator name for BD for a friendlier message
+                        const bdOperatorMap: Record<string, string> = {
+                            '17': 'Grameenphone', '13': 'Grameenphone',
+                            '18': 'Robi', '16': 'Robi (Airtel)',
+                            '19': 'Banglalink', '14': 'Banglalink',
+                            '15': 'Teletalk',
+                            '11': 'Citycell', '12': 'Citycell',
+                        };
+                        if (selectedCode === '+880') {
+                            const validNames = [...new Set(rule.valid.map(p => bdOperatorMap[p] || p))].join(', ');
+                            return `Invalid BD number. Must start with a valid operator prefix (e.g. 017, 018, 019, 013…).`;
+                        }
+                        return `This doesn't look like a valid ${rule.label} mobile number.`;
+                    }
+                    return null; // valid prefix
+                };
+
                 const required = expectedDigits[selectedCode];
 
                 if (/^(\d)\1{7,}$/.test(subscriberDigits)) {
@@ -457,10 +539,9 @@ export default function ApplyForm() {
                     isValid = false;
                     if (isTouched) phoneErrorMsg = 'Please enter a real phone number.';
                 } else if (subscriberDigits.length < (required ? required - 1 : 7)) {
-                    // Still typing — disable Next silently, no error shown
+                    // Still typing — disable Next silently
                     isValid = false;
                 } else if (required && subscriberDigits.length < required) {
-                    // Close but not enough digits yet
                     isValid = false;
                     if (isTouched) phoneErrorMsg = `Number needs ${required} digits (you have ${subscriberDigits.length}).`;
                 } else if (required && subscriberDigits.length > required) {
@@ -470,10 +551,17 @@ export default function ApplyForm() {
                     isValid = false;
                     if (isTouched) phoneErrorMsg = subscriberDigits.length < 7 ? '' : 'Phone number is too long.';
                 } else {
-                    // Right length → valid
-                    isValid = true;
+                    // Digit count is correct — now check carrier prefix
+                    const carrierError = checkCarrierPrefix();
+                    if (carrierError) {
+                        isValid = false;
+                        if (isTouched) phoneErrorMsg = carrierError;
+                    } else {
+                        isValid = true;
+                    }
                 }
             }
+
 
             if (isValid && currentQ.type === 'email' && val.trim().length > 0) {
                 isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
