@@ -30,9 +30,9 @@ export default async function ProductsPage() {
     return (
         <div className="min-h-screen bg-[#060E24] font-sans">
             {/* Background radial gradient */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden -z-0">
-                <div className="absolute top-[-20%] left-[50%] -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-[#0A369D]/25 blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#E32636]/10 blur-[100px]" />
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="absolute top-[-20%] left-[50%] -translate-x-1/2 w-225 h-175 rounded-full bg-[#0A369D]/25 blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-125 h-125 rounded-full bg-[#E32636]/10 blur-[100px]" />
             </div>
 
             {/* Header */}
@@ -63,7 +63,7 @@ export default async function ProductsPage() {
                 </span>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight mb-4">
                     Your Future,{' '}
-                    <span className="bg-gradient-to-r from-[#5B9AF5] to-[#E32636] bg-clip-text text-transparent">
+                    <span className="bg-linear-to-r from-[#5B9AF5] to-[#E32636] bg-clip-text text-transparent">
                         Your World
                     </span>
                 </h1>
@@ -168,13 +168,16 @@ function ProductCard({ form }: { form: any }) {
         <Link href={`/apply?form_id=${form.form_id}`} className="group relative flex flex-col rounded-3xl overflow-hidden border border-white/10 shadow-2xl hover:shadow-[#0A369D]/20 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             {/* Background Image */}
             <div className="relative h-52 overflow-hidden">
-                <img
+                <Image
                     src={bgImage}
                     alt={form.country || 'University'}
+                    fill
+                    unoptimized
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/80" />
+                <div className="absolute inset-0 bg-linear-to-b from-black/10 via-black/20 to-black/80" />
 
                 {/* Country Badge */}
                 <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5">

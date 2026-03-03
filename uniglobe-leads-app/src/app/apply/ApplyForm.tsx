@@ -149,7 +149,7 @@ export default function ApplyForm() {
         }
 
         initForm();
-    }, [formId]);
+    }, [formId, searchParams]);
 
     /**
      * GPS REACTIVE OVERRIDE
@@ -219,12 +219,12 @@ export default function ApplyForm() {
             } catch (e) { /* silently fail */ }
         };
         findOffice();
-    }, [isSuccess]);
+    }, [isSuccess, userLat, userLon]);
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center flex flex-col items-center justify-center min-h-[400px] sm:min-h-[500px] w-full border border-slate-100/50 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#0A369D] to-transparent opacity-50"></div>
+            <div className="bg-white rounded-4xl shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center flex flex-col items-center justify-center min-h-100 sm:min-h-125 w-full border border-slate-100/50 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-[#0A369D] to-transparent opacity-50"></div>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A369D] mb-6"></div>
                 <p className="text-slate-500 font-medium tracking-wide animate-pulse">Loading questions...</p>
             </div>
@@ -233,7 +233,7 @@ export default function ApplyForm() {
 
     if (error) {
         return (
-            <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center min-h-[400px] sm:min-h-[500px] flex flex-col justify-center w-full border border-red-50 relative overflow-hidden">
+            <div className="bg-white rounded-4xl shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center min-h-100 sm:min-h-125 flex flex-col justify-center w-full border border-red-50 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -249,7 +249,7 @@ export default function ApplyForm() {
 
     if (questions.length === 0 && !isSuccess) {
         return (
-            <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center min-h-[400px] sm:min-h-[500px] flex flex-col justify-center w-full border border-slate-100/50">
+            <div className="bg-white rounded-4xl shadow-2xl shadow-slate-200/60 p-6 sm:p-8 text-center min-h-100 sm:min-h-125 flex flex-col justify-center w-full border border-slate-100/50">
                 <h2 className="text-2xl font-extrabold text-slate-800 mb-3 tracking-tight">No active questions found.</h2>
                 <p className="text-slate-500 font-medium">This form is empty or inactive.</p>
             </div>
@@ -258,10 +258,10 @@ export default function ApplyForm() {
 
     if (isSuccess) {
         return (
-            <div className="bg-white rounded-[32px] shadow-2xl shadow-emerald-500/10 p-6 sm:p-10 text-center flex flex-col items-center justify-center min-h-[400px] sm:min-h-[500px] w-full border border-emerald-50 relative overflow-hidden animate-in fade-in duration-700 slide-in-from-bottom-8">
-                <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 to-transparent opacity-50 pointer-events-none"></div>
+            <div className="bg-white rounded-4xl shadow-2xl shadow-emerald-500/10 p-6 sm:p-10 text-center flex flex-col items-center justify-center min-h-100 sm:min-h-125 w-full border border-emerald-50 relative overflow-hidden animate-in fade-in duration-700 slide-in-from-bottom-8">
+                <div className="absolute inset-0 bg-linear-to-b from-emerald-50/50 to-transparent opacity-50 pointer-events-none"></div>
 
-                <div className="relative w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-8 ring-[12px] ring-emerald-50 shadow-inner">
+                <div className="relative w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-8 ring-12 ring-emerald-50 shadow-inner">
                     <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
                         <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"></polyline>
                     </svg>
@@ -496,7 +496,7 @@ export default function ApplyForm() {
                 <p className="text-slate-500 font-medium text-[14px] sm:text-[16px] mb-4 sm:mb-8">Takes 30–60 seconds</p>
 
                 {/* Main Card */}
-                <div className="bg-white/95 backdrop-blur-md rounded-[28px] sm:rounded-[32px] shadow-2xl shadow-slate-200/50 p-6 pb-20 sm:p-8 sm:px-10 w-full max-w-md min-h-[350px] sm:min-h-[550px] flex flex-col border border-white/60 relative overflow-hidden transition-all hover:shadow-slate-300/40">
+                <div className="bg-white/95 backdrop-blur-md rounded-[28px] sm:rounded-4xl shadow-2xl shadow-slate-200/50 p-6 pb-20 sm:p-8 sm:px-10 w-full max-w-md min-h-87.5 sm:min-h-137.5 flex flex-col border border-white/60 relative overflow-hidden transition-all hover:shadow-slate-300/40">
 
                     {/* Subtle Top Accent Line */}
                     <div
@@ -522,7 +522,7 @@ export default function ApplyForm() {
                     </div>
 
                     {/* Step Content Wrapper using Framer Motion */}
-                    <div className="flex-grow flex flex-col relative">
+                    <div className="grow flex flex-col relative">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentStep}
@@ -530,7 +530,7 @@ export default function ApplyForm() {
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: -50, opacity: 0 }}
                                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                                className="flex-grow flex flex-col pb-4"
+                                className="grow flex flex-col pb-4"
                             >
 
                                 {!isReviewStep && currentQ ? (
@@ -543,7 +543,7 @@ export default function ApplyForm() {
                                         )}
 
                                         {/* Render Inputs */}
-                                        <div className="mt-2 sm:mt-6 mb-2 flex-grow">
+                                        <div className="mt-2 sm:mt-6 mb-2 grow">
                                             {currentQ.type === 'mcq' && (
                                                 <div className="flex flex-col gap-3">
                                                     {currentQ.options?.split('|').map((opt) => (
@@ -553,7 +553,7 @@ export default function ApplyForm() {
                                                                 setAnswers({ ...answers, [currentQ.key]: opt });
                                                                 setTimeout(handleNext, 350);
                                                             }}
-                                                            className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-[2px] sm:border-[2.5px] transition-all duration-200 active:scale-[0.98] ${answers[currentQ.key] === opt
+                                                            className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-2 sm:border-[2.5px] transition-all duration-200 active:scale-[0.98] ${answers[currentQ.key] === opt
                                                                 ? 'shadow-lg shadow-black/5'
                                                                 : 'border-slate-100 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md'
                                                                 }`}
@@ -571,7 +571,7 @@ export default function ApplyForm() {
 
                                             {currentQ.type === 'dropdown' && (
                                                 <select
-                                                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border-[2px] sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all appearance-none cursor-pointer shadow-sm hover:border-slate-300"
+                                                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all appearance-none cursor-pointer shadow-sm hover:border-slate-300"
                                                     value={answers[currentQ.key] || ''}
                                                     onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
                                                 >
@@ -585,7 +585,7 @@ export default function ApplyForm() {
                                             {['short_text', 'phone', 'email'].includes(currentQ.type) && (
                                                 <div className="relative">
                                                     {currentQ.type === 'phone' ? (
-                                                        <div className={`flex rounded-xl sm:rounded-2xl border-[2px] sm:border-[2.5px] overflow-hidden shadow-sm transition-all focus-within:ring-[4px] ${!isValid && touchedFields[currentQ.key] ? 'border-red-400 focus-within:ring-red-100 focus-within:border-red-500' : 'border-slate-100 hover:border-slate-300 focus-within:border-[var(--theme-color)]'}`}>
+                                                        <div className={`flex rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] overflow-hidden shadow-sm transition-all focus-within:ring-4 ${!isValid && touchedFields[currentQ.key] ? 'border-red-400 focus-within:ring-red-100 focus-within:border-red-500' : 'border-slate-100 hover:border-slate-300 focus-within:border-(--theme-color)'}`}>
                                                             {/* Country Code Picker */}
                                                             <select
                                                                 className="shrink-0 bg-slate-50 border-r border-slate-200 px-2 py-3 sm:py-4 text-slate-700 font-bold text-[15px] outline-none cursor-pointer"
@@ -674,7 +674,7 @@ export default function ApplyForm() {
                                                             placeholder={currentQ.placeholder || ''}
                                                             value={answers[currentQ.key] || ''}
                                                             onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
-                                                            className={`w-full px-4 sm:px-5 py-3 sm:py-4 border-[2px] sm:border-[2.5px] rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[16px] sm:text-[17px] outline-none transition-all shadow-sm border-slate-100 hover:border-slate-300 focus:ring-[4px] placeholder:text-slate-400 placeholder:font-medium`}
+                                                            className={`w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[16px] sm:text-[17px] outline-none transition-all shadow-sm border-slate-100 hover:border-slate-300 focus:ring-4 placeholder:text-slate-400 placeholder:font-medium`}
                                                             onBlur={() => setTouchedFields({ ...touchedFields, [currentQ.key]: true })}
                                                             onFocus={(e) => {
                                                                 setTimeout(() => {
@@ -696,7 +696,7 @@ export default function ApplyForm() {
                                                     placeholder={currentQ.placeholder || ''}
                                                     value={answers[currentQ.key] || ''}
                                                     onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
-                                                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border-[2px] sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all min-h-[120px] sm:min-h-[140px] resize-none shadow-sm hover:border-slate-300 focus:ring-[4px] placeholder:text-slate-400 placeholder:font-medium"
+                                                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all min-h-30 sm:min-h-35 resize-none shadow-sm hover:border-slate-300 focus:ring-4 placeholder:text-slate-400 placeholder:font-medium"
                                                     onFocus={(e) => {
                                                         setTimeout(() => {
                                                             const container = e.target.closest('.bg-white\\/95');
@@ -710,10 +710,10 @@ export default function ApplyForm() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col h-full max-h-[350px]">
+                                    <div className="flex flex-col h-full max-h-87.5">
                                         <h2 className="text-[24px] font-extrabold text-[#1E293B] mb-2 leading-tight">Almost done!</h2>
                                         <p className="text-slate-500 font-medium text-[15px] mb-6">Review your details below.</p>
-                                        <div className="bg-[#F8FAFC] rounded-2xl p-6 border border-slate-200/60 flex-grow overflow-y-auto shadow-inner custom-scrollbar relative">
+                                        <div className="bg-[#F8FAFC] rounded-2xl p-6 border border-slate-200/60 grow overflow-y-auto shadow-inner custom-scrollbar relative">
                                             <div className="flex flex-col gap-5 relative z-10">
                                                 {questions.map(q => (
                                                     <div key={q.id} className="pb-4 border-b border-slate-200/80 last:border-0 last:pb-0">
@@ -793,7 +793,7 @@ const BackgroundAnimation = ({ style }: { style: string }) => {
         return (
             <div className="fixed inset-0 bg-[#F1F5F9] -z-10 overflow-hidden flex items-end justify-center pointer-events-none opacity-80 mix-blend-multiply">
                 {/* Basic SVG Line Art representation of London Skyline */}
-                <svg viewBox="0 0 1000 300" className="w-full h-auto max-h-[50vh] min-w-[1200px] text-slate-300" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 1000 300" className="w-full h-auto max-h-[50vh] min-w-300 text-slate-300" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M100 300 V200 H150 V300" />
                     <path d="M125 200 L125 150" />
                     {/* Big Ben */}
