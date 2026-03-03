@@ -254,8 +254,20 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                                 onChange={(e) => updateQuestion(q.id, 'help_text', e.target.value)}
                                                 rows={6}
                                                 placeholder={`Leave blank for no follow-ups, or paste JSON like:\n{\n  "IELTS": [\n    {"label": "Overall Score?", "type": "number", "range": "0|9"},\n    {"label": "Min Band?", "type": "number", "range": "0|9"}\n  ],\n  "PTE": [\n    {"label": "PTE Score?", "type": "number", "range": "10|90"}\n  ]\n}`}
-                                                className="w-full p-2.5 border border-indigo-200 bg-white rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-xs font-mono text-slate-800 resize-y"
+                                                className={`w-full p-2.5 border rounded-lg focus:ring-2 outline-none text-xs font-mono text-slate-800 resize-y ${q.help_text?.trim().startsWith('{')
+                                                        ? (() => { try { JSON.parse(q.help_text); return 'border-emerald-300 bg-white focus:ring-emerald-400'; } catch { return 'border-red-300 bg-red-50 focus:ring-red-400'; } })()
+                                                        : 'border-indigo-200 bg-white focus:ring-indigo-400'
+                                                    }`}
                                             />
+                                            {/* Live JSON validation feedback */}
+                                            {q.help_text?.trim().startsWith('{') && (() => {
+                                                try {
+                                                    JSON.parse(q.help_text);
+                                                    return <p className="mt-1 text-xs font-semibold text-emerald-600">✓ Valid JSON — follow-ups will work</p>;
+                                                } catch (e: any) {
+                                                    return <p className="mt-1 text-xs font-semibold text-red-600">✗ Invalid JSON: {e.message}</p>;
+                                                }
+                                            })()}
                                             <button
                                                 type="button"
                                                 onClick={() => {

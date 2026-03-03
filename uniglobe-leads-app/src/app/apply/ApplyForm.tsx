@@ -669,7 +669,7 @@ export default function ApplyForm() {
                                         <h2 className="text-[20px] sm:text-2xl font-extrabold text-[#1E293B] mb-1 sm:mb-2 leading-snug">
                                             {currentQ.label}
                                         </h2>
-                                        {currentQ.help_text && (
+                                        {currentQ.help_text && !currentQ.help_text.trim().startsWith('{') && (
                                             <p className="text-slate-500 text-[14px] sm:text-[15px] mb-3 sm:mb-6 leading-relaxed font-medium">{currentQ.help_text}</p>
                                         )}
 
@@ -683,7 +683,9 @@ export default function ApplyForm() {
                                                     if (currentQ.help_text?.trim().startsWith('{')) {
                                                         followConfig = JSON.parse(currentQ.help_text);
                                                     }
-                                                } catch { }
+                                                } catch (e) {
+                                                    console.error(`[SmartMCQ] Invalid follow-up JSON on question "${currentQ.key}":`, e);
+                                                }
 
                                                 const selectedOpt = (answers[currentQ.key] || '').split(' | ')[0];
                                                 const followUps = followConfig[selectedOpt] || [];
