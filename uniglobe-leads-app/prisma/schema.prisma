@@ -27,6 +27,11 @@ model Form {
   success_description   String?    @default("We've received your info.\nA counselor will call you shortly.")
   whatsapp_number       String?    @default("+447441394235")
 
+  // Greeting section shown under the form name heading
+  greeting_headline     String?    // e.g. "Study in the UK – Masters by Research (MRes)"
+  greeting_body         String?    // Paragraph text or pipe-separated list items "Item 1|Item 2|Item 3"
+  greeting_type         String?    @default("paragraph") // 'paragraph' or 'list'
+
   // Product Card fields (for the public products page)
   country               String?    // e.g., "United Kingdom"
   university_name       String?    // e.g., "University of Westminster"

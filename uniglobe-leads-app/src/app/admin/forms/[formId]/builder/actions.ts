@@ -86,6 +86,10 @@ export async function updateFormSettings(formId: string, data: any) {
             // Social / redirect
             facebook_page_url: data.facebook_page_url || null,
             products_page_url: data.products_page_url || null,
+            // Greeting
+            greeting_headline: data.greeting_headline || null,
+            greeting_body: data.greeting_body || null,
+            greeting_type: data.greeting_type || 'paragraph',
         }
     });
 

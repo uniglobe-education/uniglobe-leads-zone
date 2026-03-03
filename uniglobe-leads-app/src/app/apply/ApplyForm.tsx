@@ -581,6 +581,32 @@ export default function ApplyForm() {
                 >
                     {formConfig.form_name}
                 </h1>
+
+                {/* Greeting — shown if admin has configured it */}
+                {(formConfig.greeting_headline || formConfig.greeting_body) && (
+                    <div className="w-full max-w-md mb-4 sm:mb-6 px-2 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {formConfig.greeting_headline && (
+                            <p className="text-[15px] sm:text-[16px] font-bold text-slate-700 mb-1.5 leading-snug">
+                                {formConfig.greeting_headline}
+                            </p>
+                        )}
+                        {formConfig.greeting_body && formConfig.greeting_type === 'list' ? (
+                            <ul className="text-left inline-block space-y-1 mt-1">
+                                {formConfig.greeting_body.split('\n').filter(Boolean).map((item: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-[13px] sm:text-[14px] text-slate-600">
+                                        <span className="mt-0.5 shrink-0 text-emerald-500 font-bold">✓</span>
+                                        {item.trim()}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : formConfig.greeting_body ? (
+                            <p className="text-[13px] sm:text-[14px] text-slate-500 leading-relaxed">
+                                {formConfig.greeting_body}
+                            </p>
+                        ) : null}
+                    </div>
+                )}
+
                 <p className="text-slate-500 font-medium text-[14px] sm:text-[16px] mb-4 sm:mb-8">Takes 30–60 seconds</p>
 
                 {/* Main Card */}

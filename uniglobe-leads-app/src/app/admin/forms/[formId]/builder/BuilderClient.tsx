@@ -27,6 +27,10 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
         success_description: form.success_description || "We've received your info.\nA counselor will call you shortly.",
         whatsapp_number: form.whatsapp_number || '+447441394235',
         office_location: form.office_location || 'dhaka',
+        // Greeting section
+        greeting_headline: form.greeting_headline || '',
+        greeting_body: form.greeting_body || '',
+        greeting_type: form.greeting_type || 'paragraph',
         // Product card fields
         country: form.country || '',
         university_name: form.university_name || '',
@@ -327,6 +331,64 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                             <p className="text-xs text-slate-500 mt-1">Number formatted with Country Code (no spaces). Users click to chat instantly.</p>
                         </div>
 
+                    </div>
+
+                    {/* Greeting Section */}
+                    <div className="flex flex-col gap-5 bg-slate-50 border border-slate-200 p-6 rounded-2xl md:col-span-2">
+                        <h3 className="font-bold text-lg text-slate-800 border-b border-slate-200 pb-2 mb-2">👋 Greeting (shown under form title)</h3>
+                        <p className="text-xs text-slate-500 -mt-3">Shown below the form name heading to set expectations. Leave both fields blank to hide the greeting.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Headline</label>
+                                <input
+                                    type="text"
+                                    value={settings.greeting_headline}
+                                    onChange={e => setSettings({ ...settings, greeting_headline: e.target.value })}
+                                    placeholder="e.g. Study in the UK – Masters by Research"
+                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">Description Style</label>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSettings({ ...settings, greeting_type: 'paragraph' })}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${settings.greeting_type === 'paragraph'
+                                                ? 'bg-[#0A369D] text-white border-[#0A369D]'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
+                                            }`}
+                                    >¶ Paragraph</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSettings({ ...settings, greeting_type: 'list' })}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${settings.greeting_type === 'list'
+                                                ? 'bg-[#0A369D] text-white border-[#0A369D]'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
+                                            }`}
+                                    >☰ List</button>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    Description {settings.greeting_type === 'list' ? '(one item per line → becomes bullet ✓)' : '(paragraph text)'}
+                                </label>
+                                <textarea
+                                    value={settings.greeting_body}
+                                    onChange={e => setSettings({ ...settings, greeting_body: e.target.value })}
+                                    placeholder={
+                                        settings.greeting_type === 'list'
+                                            ? 'Apply MRes and get your Offer Letter\nFly with your dependents\nScholarship available'
+                                            : 'e.g. Apply MRes and secure your Offer Letter today.'
+                                    }
+                                    rows={4}
+                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-sm font-medium"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
