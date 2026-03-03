@@ -68,7 +68,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
         'platform': lead.platform || 'Website',
         'phone': formattedPhone,
         'firstname': answers['first_name'] || answers['name'] || answers['firstname'] || answers['first name'] || '',
-        'city': answers['city'] || ''
+        'city': (lead.city as string | undefined) || answers['city'] || ''
     };
 
     // Add raw answers mapped by normalized question key

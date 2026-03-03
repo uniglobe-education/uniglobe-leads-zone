@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendFacebookCapiEvent } from '@/lib/facebookCapi';
+import { reverseGeocodeCity } from '@/lib/reverseGeocode';
 
 
 export async function POST(
@@ -110,6 +111,27 @@ export async function POST(
         try {
             fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/cron/sync-sheets`, { method: 'POST' }).catch(() => { });
         } catch (e) { }
+
+        // Fire & Forget: Reverse geocode GPS coords → city, then update DB
+        // Runs asynchronously so it never blocks the form submission response.
+        if (user_lat != null && user_lon != null) {
+            (async () => {
+                try {
+                    const lat = parseFloat(user_lat);
+                    const lon = parseFloat(user_lon);
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        const geocodedCity = await reverseGeocodeCity(lat, lon);
+                        if (geocodedCity) {
+                            await prisma.lead.update({
+                                where: { id: updatedLead.id },
+                                data: { city: geocodedCity },
+                            });
+                            console.log(`[GEO] Lead ${updatedLead.lead_id} city set to: ${geocodedCity}`);
+                        }
+                    }
+                } catch (e) { /* silent */ }
+            })();
+        }
 
         // Fire & Forget: Send server-side Lead event to Facebook Conversions API
         sendFacebookCapiEvent({ ...updatedLead, form: lead.form }, request.headers).catch(() => { });

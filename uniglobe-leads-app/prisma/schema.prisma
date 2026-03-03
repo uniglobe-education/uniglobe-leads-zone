@@ -112,6 +112,7 @@ model Lead {
   // Geographic location of the user at time of submission
   user_lat          Float?
   user_lon          Float?
+  city              String?  // Reverse-geocoded from user_lat/user_lon (or from answers)
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
