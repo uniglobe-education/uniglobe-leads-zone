@@ -14,7 +14,7 @@ function normalisePhone(phone: string): string {
     return phone.replace(/[^0-9]/g, '');
 }
 
-interface LeadForCapi {
+export interface LeadForCapi {
     id: string;
     lead_id: string;
     phone?: string | null;
@@ -128,5 +128,89 @@ export async function sendFacebookCapiEvent(
     } catch (err) {
         // Never propagate — CAPI failure must not break form submission
         console.error('[CAPI] Failed to send event:', err);
+    }
+}
+
+/**
+ * Fire a Facebook Conversions API event for a CRM lead status change.
+ * Uses the lead_status string as the event_name with action_source "crm".
+ * This teaches Facebook about lead quality (QUALIFIED, APPLICATION_STARTED, etc.)
+ * Fire-and-forget — never throws.
+ */
+export async function sendFacebookCapiStatusEvent(
+    lead: LeadForCapi,
+    leadStatus: string
+): Promise<void> {
+    if (!PIXEL_ID || !ACCESS_TOKEN) {
+        console.warn('[CAPI] FB_PIXEL_ID or FB_CAPI_ACCESS_TOKEN not set — skipping status CAPI event.');
+        return;
+    }
+
+    try {
+        const userData: Record<string, string | undefined> = {};
+
+        if (lead.phone) {
+            const normPhone = normalisePhone(lead.phone);
+            if (normPhone.length >= 7) userData['ph'] = sha256(normPhone);
+        }
+
+        try {
+            if (lead.answers) {
+                const parsed = JSON.parse(lead.answers);
+                const email = parsed['email'] || parsed['Email'] || parsed['email_address'];
+                if (email && typeof email === 'string' && email.includes('@')) {
+                    userData['em'] = sha256(email);
+                }
+            }
+        } catch { /* ignore */ }
+
+        if (lead.fbp) userData['fbp'] = lead.fbp;
+        if (lead.fbc) userData['fbc'] = lead.fbc;
+
+        // Sanitise the status to a valid Facebook event name (max 50 chars, safe chars only)
+        // e.g. "QUALIFIED ⭐" → "QUALIFIED"
+        const sanitisedStatus = leadStatus
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_|_$/g, '')
+            .substring(0, 50);
+
+        const eventPayload: Record<string, unknown> = {
+            event_name: sanitisedStatus,
+            event_time: Math.floor(Date.now() / 1000),
+            event_id: `${lead.id}_status_${sanitisedStatus}_${Date.now()}`,
+            action_source: 'crm',
+            user_data: userData,
+            custom_data: {
+                lead_id: lead.lead_id,
+                form_id: lead.form?.form_id,
+                lead_status: leadStatus,
+                lead_event_source: 'Website CRM',
+                event_source: 'crm',
+                utm_source: lead.utm_source || undefined,
+                utm_campaign: lead.utm_campaign || undefined,
+            },
+        };
+
+        const body: Record<string, unknown> = { data: [eventPayload] };
+        if (TEST_EVENT_CODE) body['test_event_code'] = TEST_EVENT_CODE;
+
+        const url = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error(`[CAPI] Status event error ${res.status}: ${text}`);
+        } else {
+            const json = await res.json() as { events_received?: number };
+            console.log(`[CAPI] Status event "${sanitisedStatus}" sent for ${lead.lead_id}. FB events_received: ${json.events_received ?? '?'}`);
+        }
+    } catch (err) {
+        console.error('[CAPI] Failed to send status event:', err);
     }
 }

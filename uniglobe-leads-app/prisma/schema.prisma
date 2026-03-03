@@ -103,6 +103,7 @@ model Lead {
   // Idempotency & State
   submissionId      String?  @unique // Client-generated UUID for idempotency
   status            String   @default("DRAFT") // DRAFT or SUBMITTED
+  lead_status       String?  @default("CREATED") // CREATED, CONTACTED, INTERESTED, QUALIFIED ⭐, etc.
   
   // CRM Tracking
   duplication_check String?

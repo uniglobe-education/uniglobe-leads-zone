@@ -57,7 +57,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
         'createdtime': new Date(lead.createdAt).toISOString(),
         'createdat': new Date(lead.createdAt).toISOString(),
         'adid': lead.ad_id || '',
-        'adname': lead.ad_name || '',
+        'adname': lead.ad_name || form.form_name || '',
         'adsetid': lead.adset_id || '',
         'adsetname': lead.adset_name || '',
         'campaignid': lead.campaign_id || '',
