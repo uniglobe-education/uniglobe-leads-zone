@@ -275,7 +275,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                     type="text"
                                     value={settings.theme_color}
                                     onChange={e => setSettings({ ...settings, theme_color: e.target.value })}
-                                    className="p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-mono"
+                                    className="p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-mono"
                                 />
                             </div>
                             <p className="text-xs text-slate-500 mt-1">Controls the primary button and progress bar colors.</p>
@@ -286,7 +286,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                             <select
                                 value={settings.background_style}
                                 onChange={e => setSettings({ ...settings, background_style: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-medium"
                             >
                                 <option value="solid">Solid (Minimal White/Gray)</option>
                                 <option value="london_art">Animated London Line Art (Premium)</option>
@@ -305,7 +305,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                 type="text"
                                 value={settings.success_title}
                                 onChange={e => setSettings({ ...settings, success_title: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-medium"
                             />
                         </div>
 
@@ -314,7 +314,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                             <textarea
                                 value={settings.success_description}
                                 onChange={e => setSettings({ ...settings, success_description: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium min-h-25"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-medium min-h-25"
                             />
                             <p className="text-xs text-slate-500 mt-1">Text shown immediately after lead submission.</p>
                         </div>
@@ -326,7 +326,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                 value={settings.whatsapp_number}
                                 onChange={e => setSettings({ ...settings, whatsapp_number: e.target.value })}
                                 placeholder="+447441394235"
-                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-mono"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-mono"
                             />
                             <p className="text-xs text-slate-500 mt-1">Number formatted with Country Code (no spaces). Users click to chat instantly.</p>
                         </div>
@@ -346,7 +346,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                     value={settings.greeting_headline}
                                     onChange={e => setSettings({ ...settings, greeting_headline: e.target.value })}
                                     placeholder="e.g. Study in the UK – Masters by Research"
-                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium"
+                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-medium"
                                 />
                             </div>
 
@@ -357,16 +357,16 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         type="button"
                                         onClick={() => setSettings({ ...settings, greeting_type: 'paragraph' })}
                                         className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${settings.greeting_type === 'paragraph'
-                                                ? 'bg-[#0A369D] text-white border-[#0A369D]'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
+                                            ? 'bg-[#0A369D] text-white border-[#0A369D]'
+                                            : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
                                             }`}
                                     >¶ Paragraph</button>
                                     <button
                                         type="button"
                                         onClick={() => setSettings({ ...settings, greeting_type: 'list' })}
                                         className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${settings.greeting_type === 'list'
-                                                ? 'bg-[#0A369D] text-white border-[#0A369D]'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
+                                            ? 'bg-[#0A369D] text-white border-[#0A369D]'
+                                            : 'bg-white text-slate-600 border-slate-300 hover:border-[#0A369D]'
                                             }`}
                                     >☰ List</button>
                                 </div>
@@ -385,7 +385,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                             : 'e.g. Apply MRes and secure your Offer Letter today.'
                                     }
                                     rows={4}
-                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-sm font-medium"
+                                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 text-sm font-medium"
                                 />
                             </div>
                         </div>
@@ -400,15 +400,15 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                         <h3 className="font-bold text-lg text-slate-800 border-b border-slate-200 pb-2 mb-2">🏫 University Details</h3>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Country</label>
-                            <input type="text" value={settings.country} onChange={e => setSettings({ ...settings, country: e.target.value })} placeholder="e.g. United Kingdom" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.country} onChange={e => setSettings({ ...settings, country: e.target.value })} placeholder="e.g. United Kingdom" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">University Name</label>
-                            <input type="text" value={settings.university_name} onChange={e => setSettings({ ...settings, university_name: e.target.value })} placeholder="e.g. University of Westminster" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.university_name} onChange={e => setSettings({ ...settings, university_name: e.target.value })} placeholder="e.g. University of Westminster" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Duration</label>
-                            <input type="text" value={settings.duration} onChange={e => setSettings({ ...settings, duration: e.target.value })} placeholder="e.g. 1 Year (Masters)" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.duration} onChange={e => setSettings({ ...settings, duration: e.target.value })} placeholder="e.g. 1 Year (Masters)" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                     </div>
 
@@ -417,15 +417,15 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                         <h3 className="font-bold text-lg text-slate-800 border-b border-slate-200 pb-2 mb-2">💰 Fees & Benefits</h3>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Tuition Fee</label>
-                            <input type="text" value={settings.tuition_fee} onChange={e => setSettings({ ...settings, tuition_fee: e.target.value })} placeholder="e.g. £12,000/year" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.tuition_fee} onChange={e => setSettings({ ...settings, tuition_fee: e.target.value })} placeholder="e.g. £12,000/year" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Scholarship</label>
-                            <input type="text" value={settings.scholarship} onChange={e => setSettings({ ...settings, scholarship: e.target.value })} placeholder="e.g. Up to £5,000" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.scholarship} onChange={e => setSettings({ ...settings, scholarship: e.target.value })} placeholder="e.g. Up to £5,000" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Cash Deposit Required</label>
-                            <input type="text" value={settings.cash_deposit} onChange={e => setSettings({ ...settings, cash_deposit: e.target.value })} placeholder="e.g. £2,500" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none" />
+                            <input type="text" value={settings.cash_deposit} onChange={e => setSettings({ ...settings, cash_deposit: e.target.value })} placeholder="e.g. £2,500" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800" />
                         </div>
                     </div>
 
@@ -453,12 +453,12 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                         <h3 className="font-bold text-lg text-slate-800 border-b border-slate-200 pb-2 mb-2">🔗 Links (Success Page)</h3>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">Facebook Page URL</label>
-                            <input type="text" value={settings.facebook_page_url} onChange={e => setSettings({ ...settings, facebook_page_url: e.target.value })} placeholder="https://facebook.com/yourpage" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-mono text-sm" />
+                            <input type="text" value={settings.facebook_page_url} onChange={e => setSettings({ ...settings, facebook_page_url: e.target.value })} placeholder="https://facebook.com/yourpage" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-mono text-sm" />
                             <p className="text-xs text-slate-500 mt-1">Shown on the success screen after form submission.</p>
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1">"View More Programs" URL</label>
-                            <input type="text" value={settings.products_page_url} onChange={e => setSettings({ ...settings, products_page_url: e.target.value })} placeholder="/ or https://yourdomain.com/products" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-mono text-sm" />
+                            <input type="text" value={settings.products_page_url} onChange={e => setSettings({ ...settings, products_page_url: e.target.value })} placeholder="/ or https://yourdomain.com/products" className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-slate-800 font-mono text-sm" />
                             <p className="text-xs text-slate-500 mt-1">Where users go after clicking "View More Programs" button.</p>
                         </div>
                     </div>
