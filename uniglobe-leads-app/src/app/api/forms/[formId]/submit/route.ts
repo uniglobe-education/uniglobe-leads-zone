@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendFacebookCapiEvent } from '@/lib/facebookCapi';
 
 
 export async function POST(
@@ -109,6 +110,9 @@ export async function POST(
         try {
             fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/cron/sync-sheets`, { method: 'POST' }).catch(() => { });
         } catch (e) { }
+
+        // Fire & Forget: Send server-side Lead event to Facebook Conversions API
+        sendFacebookCapiEvent({ ...updatedLead, form: lead.form }, request.headers).catch(() => { });
 
         return NextResponse.json({
             success: true,
