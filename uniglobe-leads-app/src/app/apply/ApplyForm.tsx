@@ -46,6 +46,8 @@ export default function ApplyForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+    // Follow-up sub-answers for smart MCQ questions (keyed by questionKey + subIndex)
+    const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
 
     const [submissionId, setSubmissionId] = useState<string | null>(null);
     const [geo, setGeo] = useState<any>(null);
@@ -673,30 +675,111 @@ export default function ApplyForm() {
 
                                         {/* Render Inputs */}
                                         <div className="mt-2 sm:mt-6 mb-2 grow">
-                                            {currentQ.type === 'mcq' && (
-                                                <div className="flex flex-col gap-3">
-                                                    {currentQ.options?.split('|').map((opt) => (
-                                                        <button
-                                                            key={opt}
-                                                            onClick={() => {
-                                                                setAnswers({ ...answers, [currentQ.key]: opt });
-                                                                setTimeout(handleNext, 350);
-                                                            }}
-                                                            className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-2 sm:border-[2.5px] transition-all duration-200 active:scale-[0.98] ${answers[currentQ.key] === opt
-                                                                ? 'shadow-lg shadow-black/5'
-                                                                : 'border-slate-100 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md'
-                                                                }`}
-                                                            style={answers[currentQ.key] === opt ? {
-                                                                borderColor: formConfig.theme_color,
-                                                                color: formConfig.theme_color,
-                                                                backgroundColor: `${formConfig.theme_color}10` // 10% opacity hex hack
-                                                            } : {}}
-                                                        >
-                                                            {opt}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
+                                            {currentQ.type === 'mcq' && (() => {
+                                                // Parse optional follow-up config from help_text JSON
+                                                // Format: { "IELTS": [{label, type, placeholder, range}], "PTE": [...] }
+                                                let followConfig: Record<string, Array<{ label: string; type: string; placeholder?: string; range?: string }>> = {};
+                                                try {
+                                                    if (currentQ.help_text?.trim().startsWith('{')) {
+                                                        followConfig = JSON.parse(currentQ.help_text);
+                                                    }
+                                                } catch { }
+
+                                                const selectedOpt = (answers[currentQ.key] || '').split(' | ')[0];
+                                                const followUps = followConfig[selectedOpt] || [];
+                                                const hasFollowUps = Object.keys(followConfig).length > 0;
+
+                                                return (
+                                                    <div className="flex flex-col gap-3">
+                                                        {currentQ.options?.split('|').map((opt) => {
+                                                            const optTrimmed = opt.trim();
+                                                            const isSelected = selectedOpt === optTrimmed;
+                                                            return (
+                                                                <div key={optTrimmed}>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // Reset follow-up answers for this question when option changes
+                                                                            const cleared: Record<string, string> = { ...followUpAnswers };
+                                                                            Object.keys(cleared).filter(k => k.startsWith(currentQ.key + '__')).forEach(k => delete cleared[k]);
+                                                                            setFollowUpAnswers(cleared);
+                                                                            // If no follow-ups for this option, auto-advance as before
+                                                                            const optFollowUps = followConfig[optTrimmed] || [];
+                                                                            if (optFollowUps.length === 0 && !hasFollowUps) {
+                                                                                setAnswers({ ...answers, [currentQ.key]: optTrimmed });
+                                                                                setTimeout(handleNext, 350);
+                                                                            } else if (optFollowUps.length === 0) {
+                                                                                // Option has no follow-ups but others do — set answer directly
+                                                                                setAnswers({ ...answers, [currentQ.key]: optTrimmed });
+                                                                            } else {
+                                                                                // Has follow-ups — select but don't advance, show sub-inputs
+                                                                                setAnswers({ ...answers, [currentQ.key]: optTrimmed });
+                                                                            }
+                                                                        }}
+                                                                        className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-2 sm:border-[2.5px] transition-all duration-200 active:scale-[0.98] ${isSelected
+                                                                            ? 'shadow-lg shadow-black/5'
+                                                                            : 'border-slate-100 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md'
+                                                                            }`}
+                                                                        style={isSelected ? {
+                                                                            borderColor: formConfig.theme_color,
+                                                                            color: formConfig.theme_color,
+                                                                            backgroundColor: `${formConfig.theme_color}10`
+                                                                        } : {}}
+                                                                    >
+                                                                        {optTrimmed}
+                                                                    </button>
+
+                                                                    {/* Inline follow-up sub-inputs — shown only for the selected option */}
+                                                                    {isSelected && followUps.length > 0 && (
+                                                                        <div className="mt-2 ml-3 pl-3 border-l-2 flex flex-col gap-2" style={{ borderColor: formConfig.theme_color + '60' }}>
+                                                                            {followUps.map((fu, fi) => {
+                                                                                const fuKey = `${currentQ.key}__${fi}`;
+                                                                                const [fuMin, fuMax] = (fu.range || '').split('|').map(Number);
+                                                                                const hasRange = !isNaN(fuMin) && !isNaN(fuMax);
+                                                                                return (
+                                                                                    <div key={fi} className="relative">
+                                                                                        <label className="block text-xs font-semibold text-slate-500 mb-1">{fu.label}</label>
+                                                                                        <input
+                                                                                            autoFocus={fi === 0}
+                                                                                            type="text"
+                                                                                            inputMode={fu.type === 'number' ? 'decimal' : 'text'}
+                                                                                            placeholder={fu.placeholder || (hasRange ? `${fuMin}–${fuMax}` : '')}
+                                                                                            value={followUpAnswers[fuKey] || ''}
+                                                                                            onKeyDown={(e) => {
+                                                                                                if (fu.type === 'number') {
+                                                                                                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) e.preventDefault();
+                                                                                                }
+                                                                                                if (e.key === 'Enter') { e.preventDefault(); if (isValid && !isSubmitting) handleNext(); }
+                                                                                            }}
+                                                                                            onChange={(e) => {
+                                                                                                const raw = e.target.value;
+                                                                                                if (fu.type === 'number' && !/^\d*\.?\d*$/.test(raw)) return;
+                                                                                                const newFu = { ...followUpAnswers, [fuKey]: raw };
+                                                                                                setFollowUpAnswers(newFu);
+                                                                                                // Assemble combined answer: "IELTS | Score: 7.5 | Min Band: 6"
+                                                                                                const parts = [optTrimmed];
+                                                                                                followUps.forEach((f, i) => {
+                                                                                                    const v = i === fi ? raw : (followUpAnswers[`${currentQ.key}__${i}`] || '');
+                                                                                                    if (v) parts.push(`${f.label.replace('?', '').trim()}: ${v}`);
+                                                                                                });
+                                                                                                setAnswers({ ...answers, [currentQ.key]: parts.join(' | ') });
+                                                                                            }}
+                                                                                            className="w-full px-3 py-2 rounded-lg border-2 border-slate-100 bg-white text-slate-800 font-bold text-[15px] outline-none focus:ring-2 placeholder:text-slate-400 placeholder:font-medium transition-all hover:border-slate-300"
+                                                                                            style={{ '--tw-ring-color': formConfig.theme_color } as any}
+                                                                                        />
+                                                                                        {hasRange && (
+                                                                                            <span className="absolute right-2 top-8 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full pointer-events-none">{fuMin}–{fuMax}</span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {currentQ.type === 'dropdown' && (
                                                 <select

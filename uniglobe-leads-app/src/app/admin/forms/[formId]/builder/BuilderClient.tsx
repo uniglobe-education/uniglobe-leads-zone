@@ -238,6 +238,41 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         </div>
                                     )}
 
+                                    {/* ✨ Smart Follow-ups — only for MCQ */}
+                                    {q.type === 'mcq' && (
+                                        <div className="md:col-span-2 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-sm font-bold text-indigo-700">✨ Smart Follow-ups</span>
+                                                <span className="text-[10px] text-indigo-400 bg-indigo-100 px-2 py-0.5 rounded-full font-semibold">optional</span>
+                                            </div>
+                                            <p className="text-xs text-indigo-600 mb-3 leading-relaxed">
+                                                Add contextual sub-questions per option. Each selected option shows its own follow-up inputs inline. The final answer is combined into one DB column e.g. <code className="bg-indigo-100 rounded px-1">IELTS | Score: 7.5 | Min Band: 6</code>
+                                            </p>
+                                            <label className="block text-xs font-semibold text-indigo-600 mb-1 uppercase tracking-wider">Follow-up Config (JSON)</label>
+                                            <textarea
+                                                value={q.help_text || ''}
+                                                onChange={(e) => updateQuestion(q.id, 'help_text', e.target.value)}
+                                                rows={6}
+                                                placeholder={`Leave blank for no follow-ups, or paste JSON like:\n{\n  "IELTS": [\n    {"label": "Overall Score?", "type": "number", "range": "0|9"},\n    {"label": "Min Band?", "type": "number", "range": "0|9"}\n  ],\n  "PTE": [\n    {"label": "PTE Score?", "type": "number", "range": "10|90"}\n  ]\n}`}
+                                                className="w-full p-2.5 border border-indigo-200 bg-white rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-xs font-mono text-slate-800 resize-y"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const opts = q.options?.split('|').map(o => o.trim()).filter(Boolean) || ['Option A', 'Option B'];
+                                                    const template: Record<string, any[]> = {};
+                                                    opts.forEach(opt => {
+                                                        template[opt] = [{ "label": "Score?", "type": "number", "range": "0|100" }];
+                                                    });
+                                                    updateQuestion(q.id, 'help_text', JSON.stringify(template, null, 2));
+                                                }}
+                                                className="mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                                            >
+                                                Generate template from current options
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <div className="md:col-span-2 flex gap-4 mt-2">
                                         <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
                                             <input
