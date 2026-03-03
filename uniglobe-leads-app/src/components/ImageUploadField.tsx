@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { toRenderableImageUrl } from '@/lib/imageUrl';
 
 type Props = {
     label: string;
@@ -47,6 +48,8 @@ export default function ImageUploadField({ label, value, onChange, placeholder, 
         if (file) handleFile(file);
     };
 
+    const previewSrc = toRenderableImageUrl(value);
+
     return (
         <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">{label}</label>
@@ -61,7 +64,7 @@ export default function ImageUploadField({ label, value, onChange, placeholder, 
             >
                 {value ? (
                     <img
-                        src={value}
+                        src={previewSrc}
                         alt="preview"
                         className="w-full h-36 object-cover"
                         onError={e => { (e.target as HTMLImageElement).src = ''; }}

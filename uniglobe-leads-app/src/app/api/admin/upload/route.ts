@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand, HeadBucketCommand, CreateBucketCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, HeadBucketCommand, CreateBucketCommand, PutBucketPolicyCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 
 /**
  * MinIO Image Upload
@@ -13,8 +13,25 @@ import { S3Client, PutObjectCommand, HeadBucketCommand, CreateBucketCommand } fr
  *   MINIO_PUBLIC_URL=http://localhost:9000   (base URL for public image links)
  */
 
+function resolveEndpoint() {
+    const rawEndpoint = (process.env.MINIO_ENDPOINT || '').trim();
+    const rawPort = (process.env.MINIO_PORT || '').trim();
+    const fallback = 'http://localhost:9000';
+
+    const withProtocol = rawEndpoint
+        ? (/^https?:\/\//i.test(rawEndpoint) ? rawEndpoint : `http://${rawEndpoint}`)
+        : fallback;
+
+    const parsed = new URL(withProtocol);
+    if (rawPort && !parsed.port) {
+        parsed.port = rawPort;
+    }
+
+    return parsed;
+}
+
 function createMinioClient() {
-    const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
+    const endpoint = resolveEndpoint().origin;
     return new S3Client({
         endpoint,
         region: 'us-east-1', // MinIO ignores this but SDK requires a value
@@ -24,6 +41,23 @@ function createMinioClient() {
         },
         forcePathStyle: true, // REQUIRED for MinIO path-style URLs
     });
+}
+
+function resolvePublicBaseUrl() {
+    const explicitPublic = (process.env.MINIO_PUBLIC_URL || '').trim();
+    if (explicitPublic) {
+        const withProtocol = /^https?:\/\//i.test(explicitPublic) ? explicitPublic : `http://${explicitPublic}`;
+        return new URL(withProtocol).origin;
+    }
+
+    const endpoint = resolveEndpoint();
+    const isDockerInternalHost = endpoint.hostname === 'minio';
+
+    if (isDockerInternalHost) {
+        endpoint.hostname = 'localhost';
+    }
+
+    return endpoint.origin;
 }
 
 const BUCKET = process.env.MINIO_BUCKET || 'uniglobe';
@@ -39,6 +73,26 @@ async function ensureBucket(s3: S3Client) {
         await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
         console.log(`[MinIO] Bucket "${BUCKET}" created successfully`);
     }
+
+    // Ensure public read access so browser <img src="http://..."> works.
+    const policy = {
+        Version: '2012-10-17',
+        Statement: [
+            {
+                Sid: 'PublicReadGetObject',
+                Effect: 'Allow',
+                Principal: '*',
+                Action: ['s3:GetObject'],
+                Resource: [`arn:aws:s3:::${BUCKET}/*`],
+            },
+        ],
+    };
+
+    await s3.send(new PutBucketPolicyCommand({
+        Bucket: BUCKET,
+        Policy: JSON.stringify(policy),
+    }));
+
     bucketEnsured = true;
 }
 
@@ -73,18 +127,76 @@ export async function POST(req: Request) {
             Key: key,
             Body: buffer,
             ContentType: file.type,
+            ACL: 'public-read',
         }));
 
-        // Build public URL: MinIO serves files at <endpoint>/<bucket>/<key>
-        const publicBase = (process.env.MINIO_PUBLIC_URL || process.env.MINIO_ENDPOINT || 'http://localhost:9000').replace(/\/$/, '');
-        const url = `${publicBase}/${BUCKET}/${key}`;
+        // Return app-proxied URL so private MinIO objects still render in browser.
+        const publicBase = resolvePublicBaseUrl();
+        const directUrl = `${publicBase}/${BUCKET}/${key}`;
+        const url = `/api/admin/upload?key=${encodeURIComponent(key)}`;
 
-        return NextResponse.json({ url, key });
+        return NextResponse.json({ url, key, directUrl });
     } catch (error: any) {
         console.error('MinIO upload error:', error);
         return NextResponse.json(
             { error: error.message || 'Upload failed. Is MinIO running?' },
             { status: 500 }
         );
+    }
+}
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const key = (searchParams.get('key') || '').trim();
+
+        if (!key) {
+            return NextResponse.json({ error: 'Missing key' }, { status: 400 });
+        }
+
+        const s3 = createMinioClient();
+        let result;
+        try {
+            result = await s3.send(new GetObjectCommand({
+                Bucket: BUCKET,
+                Key: key,
+            }));
+        } catch (error: any) {
+            const shouldRetryLowercase =
+                (error?.name === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) &&
+                key !== key.toLowerCase();
+
+            if (!shouldRetryLowercase) {
+                throw error;
+            }
+
+            result = await s3.send(new GetObjectCommand({
+                Bucket: BUCKET,
+                Key: key.toLowerCase(),
+            }));
+        }
+
+        const body = result.Body;
+        if (!body) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+
+        const stream = typeof (body as any).transformToWebStream === 'function'
+            ? (body as any).transformToWebStream()
+            : (body as any);
+
+        return new Response(stream, {
+            status: 200,
+            headers: {
+                'Content-Type': result.ContentType || 'application/octet-stream',
+                'Cache-Control': 'public, max-age=31536000, immutable',
+            },
+        });
+    } catch (error: any) {
+        if (error?.name === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+        console.error('MinIO fetch error:', error);
+        return NextResponse.json({ error: 'Failed to fetch object' }, { status: 500 });
     }
 }

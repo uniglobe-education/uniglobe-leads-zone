@@ -9,6 +9,9 @@ node_modules/
 out/
 build/
 dist/
+.cache/
+tmp/
+temp/
 *.tsbuildinfo
 next-env.d.ts
 
@@ -35,3 +38,11 @@ yarn-error.log*
 .vercel
 prisma/generated/
 src/generated/prisma
+
+# Large/Binary artifacts
+bin/
+uniglobe-leads-app/bin/
+*.zip
+*.tar.gz
+*.7z
+*.exe

@@ -13,9 +13,21 @@
 # testing
 /coverage
 
+# bin / large local artifacts
+/bin/
+/tmp/
+/temp/
+*.zip
+*.tar.gz
+*.7z
+*.exe
+
+
 # next.js
 /.next/
 /out/
+/dist/
+/build/
 
 # production
 /build

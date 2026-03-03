@@ -105,7 +105,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[600px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-150">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-[#1E293B]">Builder: {form.form_name}</h2>
@@ -163,7 +163,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                             <div key={q.id} className="bg-slate-50 border border-slate-200 rounded-xl p-5 relative group">
 
                                 {/* Reorder Controls */}
-                                <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute -left-3 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => moveQuestion(i, 'up')} disabled={i === 0} className="p-1.5 bg-white border border-slate-200 rounded shadow-sm text-slate-400 hover:text-[#0A369D] disabled:opacity-30">▲</button>
                                     <button onClick={() => moveQuestion(i, 'down')} disabled={i === questions.length - 1} className="p-1.5 bg-white border border-slate-200 rounded shadow-sm text-slate-400 hover:text-[#0A369D] disabled:opacity-30">▼</button>
                                 </div>
@@ -209,7 +209,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider text-red-600">Stable DB Key</label>
+                                        <label className="block text-xs font-semibold mb-1 uppercase tracking-wider text-red-600">Stable DB Key</label>
                                         <input
                                             type="text"
                                             value={q.key}
@@ -310,7 +310,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                             <textarea
                                 value={settings.success_description}
                                 onChange={e => setSettings({ ...settings, success_description: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium min-h-[100px]"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none font-medium min-h-25"
                             />
                             <p className="text-xs text-slate-500 mt-1">Text shown immediately after lead submission.</p>
                         </div>

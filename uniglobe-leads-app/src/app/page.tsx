@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toRenderableImageUrl } from '@/lib/imageUrl';
 
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -153,7 +154,7 @@ export default async function ProductsPage() {
 
 function ProductCard({ form }: { form: any }) {
     const flag = form.country ? (COUNTRY_FLAGS[form.country] || '🌍') : '🌍';
-    const bgImage = form.bg_image_url || '/uk_bg.png';
+    const bgImage = toRenderableImageUrl(form.bg_image_url) || '/uk_bg.png';
     const hasProductInfo = form.university_name || form.tuition_fee || form.scholarship || form.duration;
 
     const benefits = [
