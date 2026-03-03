@@ -30,6 +30,23 @@ services:
     volumes:
       - miniodata:/data
 
+  # One-shot schema sync — runs prisma db push, then exits.
+  # All other services that need the DB must depend on this.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: uniglobe-migrate
+    restart: "no" # Run once and exit — not a long-running service
+    command: ./node_modules/.bin/prisma db push --skip-generate --accept-data-loss
+    environment:
+      - DATABASE_URL=postgresql://saaifshuvo@db:5432/uniglobe_leads
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - db
+
   # The Next.js App
   app:
     build:
@@ -53,6 +70,7 @@ services:
     depends_on:
       - db
       - minio
+      - migrate
 
   # The Cloudflare Tunnel
   cloudflared:
@@ -82,6 +100,7 @@ services:
       - /app/node_modules
     depends_on:
       - db
+      - migrate
 
 volumes:
   pgdata:
