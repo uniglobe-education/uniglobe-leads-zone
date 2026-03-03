@@ -72,7 +72,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: uniglobe-prisma-studio
     restart: unless-stopped
-    command: npx prisma studio --hostname 0.0.0.0 --port 5555
+    command: ./node_modules/.bin/prisma studio --hostname 0.0.0.0 --port 5555
     ports:
       - "5555:5555"
     environment:
