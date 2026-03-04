@@ -27,6 +27,23 @@ export async function pushLeadToSheet(lead: any, form: any) {
     const tabName = form.target_sheet_tab_name || form.form_name;
     const spreadsheetId = globalSetting.master_google_sheet_id;
 
+    // ── Fetch questions with sheet_column mappings ────────────────────────
+    const formQuestions = await prisma.question.findMany({
+        where: { form_id: form.id, enabled: true },
+        orderBy: { order: 'asc' },
+        select: { key: true, sheet_column: true },
+    });
+
+    // Build reverse map: normalized sheet_column → [question keys]
+    // This lets multiple questions merge their answers into one sheet column
+    const columnToKeys: Record<string, string[]> = {};
+    for (const q of formQuestions) {
+        const target = q.sheet_column?.trim() || q.key; // fallback to question key
+        const normTarget = normalizeHeader(target);
+        if (!columnToKeys[normTarget]) columnToKeys[normTarget] = [];
+        columnToKeys[normTarget].push(q.key);
+    }
+
     // Fetch the header row to determine exact column placement
     const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(tabName + '!1:1')}`;
     const headerRes = await fetch(headerUrl, {
@@ -47,11 +64,14 @@ export async function pushLeadToSheet(lead: any, form: any) {
     const answers = JSON.parse(lead.answers || '{}');
 
     // Helper to normalize the user's header columns so we can loosely match them
-    const normalizeHeader = (label: string) => label ? String(label).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    function normalizeHeader(label: string) {
+        return label ? String(label).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    }
 
     const rawPhone = lead.phone || answers['phone'] || answers['phonenumber'] || '';
     const formattedPhone = rawPhone ? (rawPhone.startsWith('p:') ? rawPhone : `p:${rawPhone}`) : '';
 
+    // ── Base lead data (non-question fields) ─────────────────────────────
     const leadData: Record<string, string> = {
         'id': lead.lead_id || '',
         'createdtime': new Date(lead.createdAt).toISOString(),
@@ -71,7 +91,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
         'city': (lead.city as string | undefined) || answers['city'] || ''
     };
 
-    // Add raw answers mapped by normalized question key
+    // Add raw answers mapped by normalized question key (for non-mapped questions)
     for (const [key, val] of Object.entries(answers)) {
         let finalVal = String(val);
         const normKey = normalizeHeader(key);
@@ -81,7 +101,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
         leadData[normKey] = finalVal;
     }
 
-    // Build the row array perfectly matching the header positions
+    // ── Build the row array matching header positions ─────────────────────
     const rowArray = new Array(headers.length).fill('');
 
     for (let i = 0; i < headers.length; i++) {
@@ -89,12 +109,30 @@ export async function pushLeadToSheet(lead: any, form: any) {
         if (!h) continue;
         const normH = normalizeHeader(h);
 
+        // Priority 1: Check if this header is a sheet_column target → merge answers
+        if (columnToKeys[normH] && columnToKeys[normH].length > 0) {
+            const parts: string[] = [];
+            for (const qKey of columnToKeys[normH]) {
+                const val = answers[qKey];
+                if (val !== undefined && val !== null && String(val).trim() !== '') {
+                    let finalVal = String(val);
+                    if ((qKey === 'phone' || qKey === 'phonenumber') && finalVal) {
+                        finalVal = finalVal.startsWith('p:') ? finalVal : `p:${finalVal}`;
+                    }
+                    parts.push(finalVal);
+                }
+            }
+            if (parts.length > 0) {
+                rowArray[i] = parts.join(' | ');
+                continue;
+            }
+        }
+
+        // Priority 2: Direct match from base leadData
         if (leadData[normH] !== undefined) {
             rowArray[i] = leadData[normH];
         } else {
-            // Also attempt loose sub-string matching for questions naturally phrased.
-            // i.e. "what is your english proficiency?" matching an answer key of just "english_proficiency"
-            let matched = false;
+            // Priority 3: Loose sub-string matching for naturally phrased headers
             for (const [key, val] of Object.entries(answers)) {
                 const normQKey = normalizeHeader(key);
                 if (normH.includes(normQKey) || normQKey.includes(normH)) {
@@ -103,7 +141,6 @@ export async function pushLeadToSheet(lead: any, form: any) {
                         finalVal = finalVal.startsWith('p:') ? finalVal : `p:${finalVal}`;
                     }
                     rowArray[i] = finalVal;
-                    matched = true;
                     break;
                 }
             }

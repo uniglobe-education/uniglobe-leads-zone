@@ -38,6 +38,7 @@ export async function bulkUpsertQuestions(formId: string, questions: any[]) {
                         options: q.options || null,
                         placeholder: q.placeholder || null,
                         help_text: q.help_text || null,
+                        sheet_column: q.sheet_column || null,
                         order: i
                     }
                 });
@@ -52,6 +53,7 @@ export async function bulkUpsertQuestions(formId: string, questions: any[]) {
                         options: q.options || null,
                         placeholder: q.placeholder || null,
                         help_text: q.help_text || null,
+                        sheet_column: q.sheet_column || null,
                         order: i
                     }
                 });

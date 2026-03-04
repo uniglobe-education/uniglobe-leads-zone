@@ -18,7 +18,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
 export default async function ProductsPage() {
     const [forms, offices] = await Promise.all([
         prisma.form.findMany({
-            where: { status: 'ACTIVE' },
+            where: { status: 'ACTIVE', deleted_at: null },
             orderBy: { createdAt: 'desc' },
         }),
         prisma.office.findMany({

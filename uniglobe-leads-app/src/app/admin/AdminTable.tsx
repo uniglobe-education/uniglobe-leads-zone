@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createForm, updateForm, updateGlobalSettings } from './actions';
+import { createForm, updateForm, updateGlobalSettings, duplicateForm, softDeleteForm, restoreForm } from './actions';
 
 export default function AdminTable({ initialForms, globalSetting }: { initialForms: any[], globalSetting: any }) {
     const [forms, setForms] = useState(initialForms);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingForm, setEditingForm] = useState<any>(null);
+    const [showDeleted, setShowDeleted] = useState(false);
 
     // Tab loading state
     const [availableTabs, setAvailableTabs] = useState<any[]>([]);
@@ -108,7 +109,13 @@ export default function AdminTable({ initialForms, globalSetting }: { initialFor
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="flex justify-end p-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex justify-end gap-3 p-4 border-b border-slate-200 bg-slate-50">
+                    <button
+                        onClick={() => setShowDeleted(!showDeleted)}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors border ${showDeleted ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                        {showDeleted ? '🗑 Trash' : '🗑 Show Trash'}
+                    </button>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="bg-[#0A369D] text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-800 transition-colors shadow-sm text-sm"
@@ -130,93 +137,143 @@ export default function AdminTable({ initialForms, globalSetting }: { initialFor
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {forms.map(form => (
-                                <tr key={form.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="font-semibold text-slate-800">{form.form_name}</div>
-                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${form.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
-                                                {form.status}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-mono">
-                                            <span>{form.form_id}</span>
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(`${window.location.origin}/apply?form_id=${form.form_id}`);
-                                                    alert('Public link copied to clipboard!');
-                                                }}
-                                                className="ml-1 text-[#0A369D] hover:underline flex items-center gap-1"
-                                                title="Copy Public Link"
-                                            >
-                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                                </svg>
-                                                Copy Link
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-xs sm:text-sm text-slate-600 truncate max-w-[200px]" title={globalSetting?.master_google_sheet_id || 'Not Set'}>
-                                        <div className="font-mono bg-slate-100 rounded px-2 py-1 truncate mb-1 text-xs">
-                                            {globalSetting?.master_google_sheet_id ? (masterSheetTitle || 'Master Sheet Linked') : <span className="text-slate-400 italic">No Master Sheet</span>}
-                                        </div>
-                                        {form.target_sheet_tab_name ? (
-                                            <div className="flex items-center gap-1 text-xs font-medium text-[#1E293B]">
-                                                <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-                                                {form.target_sheet_tab_name}
+                            {forms
+                                .filter((form: any) => showDeleted ? form.deleted_at : !form.deleted_at)
+                                .map((form: any) => (
+                                    <tr key={form.id} className={`hover:bg-slate-50/50 transition-colors ${form.deleted_at ? 'opacity-60' : ''}`}>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="font-semibold text-slate-800">{form.form_name}</div>
+                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${form.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                                                    {form.status}
+                                                </span>
                                             </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
-                                                <svg className="w-3 h-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                No Tab Selected
+                                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-mono">
+                                                <span>{form.form_id}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(`${window.location.origin}/apply?form_id=${form.form_id}`);
+                                                        alert('Public link copied to clipboard!');
+                                                    }}
+                                                    className="ml-1 text-[#0A369D] hover:underline flex items-center gap-1"
+                                                    title="Copy Public Link"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                    </svg>
+                                                    Copy Link
+                                                </button>
                                             </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-center font-medium hidden md:table-cell">{form._count.questions}</td>
-                                    <td className="p-4 text-center hidden md:table-cell">
-                                        <Link href={`/admin/forms/${form.id}/leads`} className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors shadow-sm cursor-pointer" title="View all leads">
-                                            {form._count.leads} <span className="ml-1 opacity-70">➔</span>
-                                        </Link>
-                                    </td>
-                                    <td className="p-4 text-center hidden md:table-cell">
-                                        <div className="flex flex-col items-center gap-1 text-xs font-medium">
-                                            <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded" title="Successful Pushes">
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                {form.networkStats?.success || 0}
+                                        </td>
+                                        <td className="p-4 text-xs sm:text-sm text-slate-600 truncate max-w-[200px]" title={globalSetting?.master_google_sheet_id || 'Not Set'}>
+                                            <div className="font-mono bg-slate-100 rounded px-2 py-1 truncate mb-1 text-xs">
+                                                {globalSetting?.master_google_sheet_id ? (masterSheetTitle || 'Master Sheet Linked') : <span className="text-slate-400 italic">No Master Sheet</span>}
                                             </div>
-                                            <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-0.5 rounded" title="Failed Pushes">
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                {form.networkStats?.failed || 0}
+                                            {form.target_sheet_tab_name ? (
+                                                <div className="flex items-center gap-1 text-xs font-medium text-[#1E293B]">
+                                                    <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                                                    {form.target_sheet_tab_name}
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
+                                                    <svg className="w-3 h-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                    No Tab Selected
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-center font-medium hidden md:table-cell">{form._count.questions}</td>
+                                        <td className="p-4 text-center hidden md:table-cell">
+                                            <Link href={`/admin/forms/${form.id}/leads`} className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-xs hover:bg-blue-100 transition-colors shadow-sm cursor-pointer" title="View all leads">
+                                                {form._count.leads} <span className="ml-1 opacity-70">➔</span>
+                                            </Link>
+                                        </td>
+                                        <td className="p-4 text-center hidden md:table-cell">
+                                            <div className="flex flex-col items-center gap-1 text-xs font-medium">
+                                                <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded" title="Successful Pushes">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                    {form.networkStats?.success || 0}
+                                                </div>
+                                                <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-0.5 rounded" title="Failed Pushes">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    {form.networkStats?.failed || 0}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-right w-[160px] sm:w-[200px]">
-                                        <div className="flex justify-end items-center gap-3 text-sm font-medium">
-                                            <a href={`/apply?form_id=${form.form_id}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                                                Preview
-                                            </a>
-                                            <span className="text-slate-300">|</span>
-                                            <a
-                                                href={`/admin/forms/${form.id}/builder`}
-                                                className="text-slate-600 hover:text-[#0A369D] hover:underline"
-                                            >
-                                                Build Form
-                                            </a>
-                                            <span className="text-slate-300">|</span>
-                                            <button
-                                                onClick={() => handleEditClick(form)}
-                                                className="text-slate-600 flex items-center gap-1 hover:text-slate-800"
-                                                title="Settings"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="p-4 text-right w-[160px] sm:w-[200px]">
+                                            <div className="flex justify-end items-center gap-3 text-sm font-medium">
+                                                <a href={`/apply?form_id=${form.form_id}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                                    Preview
+                                                </a>
+                                                <span className="text-slate-300">|</span>
+                                                <a
+                                                    href={`/admin/forms/${form.id}/builder`}
+                                                    className="text-slate-600 hover:text-[#0A369D] hover:underline"
+                                                >
+                                                    Build Form
+                                                </a>
+                                                <span className="text-slate-300">|</span>
+                                                <button
+                                                    onClick={() => handleEditClick(form)}
+                                                    className="text-slate-600 flex items-center gap-1 hover:text-slate-800"
+                                                    title="Settings"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                </button>
+                                                <span className="text-slate-300">|</span>
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await duplicateForm(form.id);
+                                                            window.location.reload();
+                                                        } catch (e: any) {
+                                                            alert('Error: ' + e.message);
+                                                        }
+                                                    }}
+                                                    className="text-slate-500 hover:text-blue-600 transition-colors"
+                                                    title="Duplicate Form"
+                                                >
+                                                    📋
+                                                </button>
+                                                {!form.deleted_at && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!confirm(`Move "${form.form_name}" to trash? You can restore it later.`)) return;
+                                                            try {
+                                                                await softDeleteForm(form.id);
+                                                                window.location.reload();
+                                                            } catch (e: any) {
+                                                                alert('Error: ' + e.message);
+                                                            }
+                                                        }}
+                                                        className="text-slate-400 hover:text-red-600 transition-colors"
+                                                        title="Move to Trash"
+                                                    >
+                                                        🗑
+                                                    </button>
+                                                )}
+                                                {form.deleted_at && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                await restoreForm(form.id);
+                                                                window.location.reload();
+                                                            } catch (e: any) {
+                                                                alert('Error: ' + e.message);
+                                                            }
+                                                        }}
+                                                        className="text-emerald-500 hover:text-emerald-700 transition-colors font-semibold text-xs"
+                                                        title="Restore Form"
+                                                    >
+                                                        ↩ Restore
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                             {forms.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="p-10 text-center text-slate-500">

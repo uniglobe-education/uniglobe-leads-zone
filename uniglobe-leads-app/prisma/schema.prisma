@@ -49,6 +49,8 @@ model Form {
   // Office location for Google Maps — 'dhaka' or 'sylhet'
   office_location       String?    @default("dhaka")
 
+  deleted_at            DateTime?  // Soft delete — when set, form is hidden but data preserved
+
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 
@@ -69,6 +71,7 @@ model Question {
   enabled     Boolean  @default(true)
   placeholder String?
   help_text   String?
+  sheet_column String?  // Target column header in Google Sheet. Multiple questions sharing the same value → answers merge.
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

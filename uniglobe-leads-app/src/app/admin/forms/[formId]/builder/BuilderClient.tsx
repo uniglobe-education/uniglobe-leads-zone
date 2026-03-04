@@ -13,6 +13,7 @@ type Question = {
     options: string;
     placeholder: string;
     help_text: string;
+    sheet_column: string;
 };
 
 export default function FormBuilderClient({ form, initialQuestions }: { form: any, initialQuestions: any[] }) {
@@ -54,7 +55,8 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
             required: q.required,
             options: q.options || '',
             placeholder: q.placeholder || '',
-            help_text: q.help_text || ''
+            help_text: q.help_text || '',
+            sheet_column: q.sheet_column || ''
         }))
     );
 
@@ -69,7 +71,8 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                 required: false,
                 options: '',
                 placeholder: '',
-                help_text: ''
+                help_text: '',
+                sheet_column: ''
             }
         ]);
     };
@@ -255,8 +258,8 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                                 rows={6}
                                                 placeholder={`Leave blank for no follow-ups, or paste JSON like:\n{\n  "IELTS": [\n    {"label": "Overall Score?", "type": "number", "range": "0|9"},\n    {"label": "Min Band?", "type": "number", "range": "0|9"}\n  ],\n  "PTE": [\n    {"label": "PTE Score?", "type": "number", "range": "10|90"}\n  ]\n}`}
                                                 className={`w-full p-2.5 border rounded-lg focus:ring-2 outline-none text-xs font-mono text-slate-800 resize-y ${q.help_text?.trim().startsWith('{')
-                                                        ? (() => { try { JSON.parse(q.help_text); return 'border-emerald-300 bg-white focus:ring-emerald-400'; } catch { return 'border-red-300 bg-red-50 focus:ring-red-400'; } })()
-                                                        : 'border-indigo-200 bg-white focus:ring-indigo-400'
+                                                    ? (() => { try { JSON.parse(q.help_text); return 'border-emerald-300 bg-white focus:ring-emerald-400'; } catch { return 'border-red-300 bg-red-50 focus:ring-red-400'; } })()
+                                                    : 'border-indigo-200 bg-white focus:ring-indigo-400'
                                                     }`}
                                             />
                                             {/* Live JSON validation feedback */}
@@ -285,7 +288,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         </div>
                                     )}
 
-                                    <div className="md:col-span-2 flex gap-4 mt-2">
+                                    <div className="md:col-span-2 flex gap-4 mt-2 items-center">
                                         <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
                                             <input
                                                 type="checkbox"
@@ -295,7 +298,19 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                             />
                                             Required Field
                                         </label>
+                                        <div className="flex-1" />
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Sheet Column</label>
+                                            <input
+                                                type="text"
+                                                value={q.sheet_column}
+                                                onChange={(e) => updateQuestion(q.id, 'sheet_column', e.target.value.replace(/\s+/g, '_').toLowerCase())}
+                                                placeholder="e.g. english_status"
+                                                className="w-40 p-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none text-xs font-mono text-slate-800 bg-white"
+                                            />
+                                        </div>
                                     </div>
+                                    <p className="md:col-span-2 text-[10px] text-slate-400 -mt-2 ml-0">Leave blank = uses question key. Same value on multiple questions = answers merge with " | " separator.</p>
 
                                 </div>
                             </div>
