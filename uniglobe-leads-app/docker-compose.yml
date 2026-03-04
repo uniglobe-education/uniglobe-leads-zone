@@ -56,6 +56,8 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://saaifshuvo@db:5432/uniglobe_leads
       - MINIO_ENDPOINT=http://minio
