@@ -60,7 +60,15 @@ export async function POST(
         }
         const newLeadId = `${prefix}${nextNum.toString().padStart(6, '0')}`;
 
-        const phone = answers.phone ? String(answers.phone).trim() : null;
+        // Find the phone value from answers — look for the question with type 'phone' first
+        const phoneQuestion = await prisma.question.findFirst({
+            where: { form_id: lead.form.id, type: 'phone' },
+            select: { key: true },
+        });
+        const phoneKey = phoneQuestion?.key || 'phone';
+        const phone = (answers[phoneKey] || answers.phone || answers.phonenumber)
+            ? String(answers[phoneKey] || answers.phone || answers.phonenumber).trim()
+            : null;
         let duplicationCheck = null;
 
         if (phone) {

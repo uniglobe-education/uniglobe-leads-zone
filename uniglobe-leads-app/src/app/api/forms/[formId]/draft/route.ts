@@ -43,8 +43,14 @@ export async function PATCH(
 
         const merged = { ...existingAnswers, ...answers };
 
-        // Extract phone if present (for top-level field)
-        const phone = merged.phone ? String(merged.phone).trim() : lead.phone ?? null;
+        // Extract phone — find the question with type 'phone' to get the right key
+        const phoneQuestion = await prisma.question.findFirst({
+            where: { form_id: lead.form.id, type: 'phone' },
+            select: { key: true },
+        });
+        const phoneKey = phoneQuestion?.key || 'phone';
+        const rawPhone = merged[phoneKey] || merged.phone || merged.phonenumber;
+        const phone = rawPhone ? String(rawPhone).trim() : lead.phone ?? null;
 
         await prisma.lead.update({
             where: { id: lead.id },

@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 
 
 export async function pushLeadToSheet(lead: any, form: any) {
+    console.log(`[SHEET-PUSH] Starting push for lead ${lead.lead_id} | form: ${form.form_name} (${form.form_id})`);
     const globalSetting = await prisma.globalSetting.findFirst();
     if (!globalSetting || !globalSetting.master_google_sheet_id) {
         throw new Error('No Master Google Sheet ID configured in Global Settings.');
@@ -26,6 +27,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
 
     const tabName = form.target_sheet_tab_name || form.form_name;
     const spreadsheetId = globalSetting.master_google_sheet_id;
+    console.log(`[SHEET-PUSH] Target: spreadsheet=${spreadsheetId} tab="${tabName}"`);
 
     // ── Fetch questions with sheet_column mappings ────────────────────────
     const formQuestions = await prisma.question.findMany({
@@ -60,6 +62,7 @@ export async function pushLeadToSheet(lead: any, form: any) {
     if (headers.length === 0) {
         throw new Error('Target Google Sheet tab is completely empty. Please create at least one header row.');
     }
+    console.log(`[SHEET-PUSH] Found ${headers.length} headers: ${headers.slice(0, 10).join(', ')}${headers.length > 10 ? '...' : ''}`);
 
     const answers = JSON.parse(lead.answers || '{}');
 
@@ -166,6 +169,8 @@ export async function pushLeadToSheet(lead: any, form: any) {
     const data = await response.json();
 
     if (!response.ok) {
+        console.error(`[SHEET-PUSH] FAILED for lead ${lead.lead_id}:`, data.error?.message);
         throw new Error(data.error?.message || 'Failed to push to Google Sheets API');
     }
+    console.log(`[SHEET-PUSH] SUCCESS for lead ${lead.lead_id} → tab "${tabName}"`);
 }
