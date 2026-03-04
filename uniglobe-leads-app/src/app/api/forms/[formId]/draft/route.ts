@@ -61,8 +61,9 @@ export async function PATCH(
                     await prisma.sheetPushJob.create({
                         data: { leadId: lead.id, status: 'PENDING' },
                     });
-                    // Fire & forget sync
-                    fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/cron/sync-sheets`, { method: 'POST' }).catch(() => { });
+                    // Fire & forget sync — direct call, no HTTP self-fetch
+                    const { syncLeadsToSheets } = await import('@/lib/syncSheets');
+                    syncLeadsToSheets().catch(() => { });
                 }
             } catch { /* unique constraint — job already exists */ }
         }

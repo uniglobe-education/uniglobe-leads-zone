@@ -106,10 +106,11 @@ export async function POST(
             return updated;
         });
 
-        // Fire & Forget: Try to trigger sync right away for instantaneous feeling
-        // We don't await this because the job is safely in Postgres.
+        // Fire & Forget: Try to sync right away for instantaneous feeling
+        // Direct function call — no HTTP self-fetch needed (works in Docker)
         try {
-            fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/cron/sync-sheets`, { method: 'POST' }).catch(() => { });
+            const { syncLeadsToSheets } = await import('@/lib/syncSheets');
+            syncLeadsToSheets().catch(() => { });
         } catch (e) { }
 
         // Fire & Forget: Reverse geocode GPS coords → city, then update DB
