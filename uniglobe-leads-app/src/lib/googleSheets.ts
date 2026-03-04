@@ -150,27 +150,63 @@ export async function pushLeadToSheet(lead: any, form: any) {
         }
     }
 
-    // Call raw Google Sheets api v4 to append the intelligently ordered row
-    const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(tabName)}:append?valueInputOption=USER_ENTERED`;
+    // ── Find existing row or append new one ────────────────────────────────
+    // Search the "id" column for an existing row for this lead (DRAFT-xxx or UG-xxx)
+    // so we UPDATE it instead of creating duplicates.
+    const submissionPrefix = lead.submissionId ? lead.submissionId.substring(0, 8) : null;
+    let existingRowIndex = -1;
 
-    const response = await fetch(appendUrl, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token.token}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            range: tabName,
-            majorDimension: 'ROWS',
-            values: [rowArray]
-        })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        console.error(`[SHEET-PUSH] FAILED for lead ${lead.lead_id}:`, data.error?.message);
-        throw new Error(data.error?.message || 'Failed to push to Google Sheets API');
+    if (submissionPrefix) {
+        // Find which column is "id"
+        const idColIdx = headers.findIndex((h: string) => normalizeHeader(h) === 'id');
+        if (idColIdx >= 0) {
+            // Fetch all values in the "id" column to find existing row
+            const colLetter = String.fromCharCode(65 + idColIdx); // A, B, C...
+            const idColUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(tabName + '!' + colLetter + ':' + colLetter)}`;
+            const idColRes = await fetch(idColUrl, { headers: { 'Authorization': `Bearer ${token.token}` } });
+            if (idColRes.ok) {
+                const idColData = await idColRes.json();
+                const idValues: string[][] = idColData.values || [];
+                for (let r = 1; r < idValues.length; r++) { // skip header row
+                    const cellVal = idValues[r]?.[0] || '';
+                    if (cellVal.includes(submissionPrefix)) {
+                        existingRowIndex = r + 1; // 1-indexed row number in sheet
+                        console.log(`[SHEET-PUSH] Found existing row ${existingRowIndex} for submissionPrefix ${submissionPrefix}`);
+                        break;
+                    }
+                }
+            }
+        }
     }
-    console.log(`[SHEET-PUSH] SUCCESS for lead ${lead.lead_id} → tab "${tabName}"`);
+
+    if (existingRowIndex > 0) {
+        // UPDATE existing row in place
+        const updateRange = `${tabName}!A${existingRowIndex}`;
+        const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`;
+        const response = await fetch(updateUrl, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ range: updateRange, majorDimension: 'ROWS', values: [rowArray] })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            console.error(`[SHEET-PUSH] UPDATE FAILED for lead ${lead.lead_id}:`, data.error?.message);
+            throw new Error(data.error?.message || 'Failed to update Google Sheets row');
+        }
+        console.log(`[SHEET-PUSH] UPDATED row ${existingRowIndex} for lead ${lead.lead_id} → tab "${tabName}"`);
+    } else {
+        // APPEND new row
+        const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(tabName)}:append?valueInputOption=USER_ENTERED`;
+        const response = await fetch(appendUrl, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ range: tabName, majorDimension: 'ROWS', values: [rowArray] })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            console.error(`[SHEET-PUSH] APPEND FAILED for lead ${lead.lead_id}:`, data.error?.message);
+            throw new Error(data.error?.message || 'Failed to push to Google Sheets API');
+        }
+        console.log(`[SHEET-PUSH] APPENDED lead ${lead.lead_id} → tab "${tabName}"`);
+    }
 }

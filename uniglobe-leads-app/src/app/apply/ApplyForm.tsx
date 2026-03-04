@@ -717,15 +717,23 @@ export default function ApplyForm() {
                                                                                 setAnswers({ ...answers, [currentQ.key]: optTrimmed });
                                                                             }
                                                                         }}
-                                                                        className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-2 sm:border-[2.5px] transition-all duration-200 active:scale-[0.98] ${isSelected
+                                                                        className={`w-full text-left px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-[15px] sm:text-[16px] border-2 sm:border-[2.5px] transition-all duration-300 active:scale-[0.98] ${isSelected
                                                                             ? 'shadow-lg shadow-black/5'
                                                                             : 'border-slate-100 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md'
                                                                             }`}
-                                                                        style={isSelected ? {
-                                                                            borderColor: formConfig.theme_color,
-                                                                            color: formConfig.theme_color,
-                                                                            backgroundColor: `${formConfig.theme_color}10`
-                                                                        } : {}}
+                                                                        style={{
+                                                                            ...(isSelected ? {
+                                                                                borderColor: formConfig.theme_color,
+                                                                                color: formConfig.theme_color,
+                                                                                backgroundColor: `${formConfig.theme_color}10`
+                                                                            } : {}),
+                                                                            // Reduce opacity of unselected options when a follow-up is showing
+                                                                            ...(!isSelected && selectedOpt && followUps.length > 0 ? {
+                                                                                opacity: 0.3,
+                                                                                transform: 'scale(0.97)',
+                                                                                pointerEvents: 'auto' as const,
+                                                                            } : {}),
+                                                                        }}
                                                                     >
                                                                         {optTrimmed}
                                                                     </button>

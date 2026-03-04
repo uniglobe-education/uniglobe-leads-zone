@@ -6,7 +6,8 @@ import { syncLeadsToSheets } from '@/lib/syncSheets';
 /**
  * PATCH /api/forms/[formId]/draft
  * Saves partial answers to a DRAFT lead while the user is still filling the form.
- * Phone number (if present in answers) must have already passed client-side validation.
+ * Creates a SheetPushJob when phone is fully valid (≥10 digits), with a 50s delay
+ * so more fields get filled before the push fires.
  */
 export async function PATCH(
     request: Request,
@@ -60,18 +61,24 @@ export async function PATCH(
             },
         });
 
-        // If we have a valid phone and no SheetPushJob exists, create one
+        // Only create a SheetPushJob when phone is VALID (≥10 digits) and no job exists yet
         if (phone && !lead.sheetPushJob) {
-            try {
-                const globalSetting = await prisma.globalSetting.findFirst();
-                if (globalSetting?.master_google_sheet_id) {
-                    await prisma.sheetPushJob.create({
-                        data: { leadId: lead.id, status: 'PENDING' },
-                    });
-                    // Fire & forget sync — direct call
-                    syncLeadsToSheets().catch(() => { });
-                }
-            } catch { /* unique constraint — job already exists */ }
+            const digitCount = phone.replace(/[^0-9]/g, '').length;
+            if (digitCount >= 10) {
+                try {
+                    const globalSetting = await prisma.globalSetting.findFirst();
+                    if (globalSetting?.master_google_sheet_id) {
+                        await prisma.sheetPushJob.create({
+                            data: { leadId: lead.id, status: 'PENDING' },
+                        });
+                        console.log(`[DRAFT] Phone valid (${digitCount} digits) for lead ${lead.lead_id} — sync in 50s`);
+                        // Fire sync after 50-second delay so more fields get filled
+                        setTimeout(() => {
+                            syncLeadsToSheets().catch(() => { });
+                        }, 50_000);
+                    }
+                } catch { /* unique constraint — job already exists */ }
+            }
         }
 
         return NextResponse.json({ ok: true });

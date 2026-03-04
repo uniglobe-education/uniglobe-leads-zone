@@ -58,7 +58,6 @@ export default async function LeadsViewPage({ params }: { params: Promise<{ form
                                 <tr className="bg-slate-50/80 border-b border-slate-200/80">
                                     <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                                     <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Phone / Name</th>
                                     <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Campaign</th>
 
                                     {questions.map(q => (
@@ -74,9 +73,6 @@ export default async function LeadsViewPage({ params }: { params: Promise<{ form
                                 ) : (
                                     form.leads.map((lead) => {
                                         const answers = JSON.parse(lead.answers || '{}');
-                                        const name = answers['first_name'] || answers['name'] || '-';
-                                        const city = answers['city'] || '-';
-
                                         return (
                                             <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-4 text-sm text-slate-600 font-medium">
@@ -84,10 +80,6 @@ export default async function LeadsViewPage({ params }: { params: Promise<{ form
                                                 </td>
                                                 <td className="p-4 text-xs font-mono text-slate-400">
                                                     {lead.lead_id}
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="font-bold text-slate-800">{lead.phone || '-'}</div>
-                                                    <div className="text-xs text-slate-500 font-medium capitalize">{name} • {city}</div>
                                                 </td>
                                                 <td className="p-4">
                                                     <div className="font-semibold text-slate-700 max-w-[150px] truncate" title={lead.campaign_name || lead.adset_name || 'Organic'}>
