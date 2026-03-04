@@ -8,21 +8,7 @@ export async function bulkUpsertQuestions(formId: string, questions: any[]) {
     // Basic verification of access could go here
 
     await prisma.$transaction(async (tx) => {
-        // Find existing questions that are NOT in the new list to delete them
-        const existingQs = await tx.question.findMany({ where: { form_id: formId } });
-        const incomingIds = questions.map(q => q.id).filter(id => id && !id.startsWith('new-'));
-
-        const toDeleteIds = existingQs
-            .filter(eq => !incomingIds.includes(eq.id))
-            .map(eq => eq.id);
-
-        if (toDeleteIds.length > 0) {
-            await tx.question.deleteMany({
-                where: { id: { in: toDeleteIds } }
-            });
-        }
-
-        // Upsert incoming
+        // Upsert incoming — no hard deletes, disabled questions stay in DB
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
             const isNew = q.id.startsWith('new-');
@@ -39,6 +25,7 @@ export async function bulkUpsertQuestions(formId: string, questions: any[]) {
                         placeholder: q.placeholder || null,
                         help_text: q.help_text || null,
                         sheet_column: q.sheet_column || null,
+                        enabled: q.enabled !== false,
                         order: i
                     }
                 });
@@ -54,6 +41,7 @@ export async function bulkUpsertQuestions(formId: string, questions: any[]) {
                         placeholder: q.placeholder || null,
                         help_text: q.help_text || null,
                         sheet_column: q.sheet_column || null,
+                        enabled: q.enabled !== false,
                         order: i
                     }
                 });

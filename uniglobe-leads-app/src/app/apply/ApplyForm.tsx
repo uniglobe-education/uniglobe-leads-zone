@@ -744,25 +744,37 @@ export default function ApplyForm() {
                                                                             {followUps.map((fu, fi) => {
                                                                                 const fuKey = `${currentQ.key}__${fi}`;
                                                                                 const [fuMin, fuMax] = (fu.range || '').split('|').map(Number);
-                                                                                const hasRange = !isNaN(fuMin) && !isNaN(fuMax);
+                                                                                // For lowestValue type, cap max at the previous follow-up's value
+                                                                                const isLowest = fu.type === 'lowestValue';
+                                                                                const prevFuKey = fi > 0 ? `${currentQ.key}__${fi - 1}` : '';
+                                                                                const prevVal = prevFuKey ? parseFloat(followUpAnswers[prevFuKey] || '') : NaN;
+                                                                                const effectiveMax = isLowest && !isNaN(prevVal) ? prevVal : fuMax;
+                                                                                const hasRange = !isNaN(fuMin) && !isNaN(effectiveMax);
+                                                                                const inputType = isLowest ? 'number' : fu.type;
                                                                                 return (
                                                                                     <div key={fi} className="relative">
                                                                                         <label className="block text-xs font-semibold text-slate-500 mb-1">{fu.label}</label>
                                                                                         <input
                                                                                             autoFocus={fi === 0}
                                                                                             type="text"
-                                                                                            inputMode={fu.type === 'number' ? 'decimal' : 'text'}
-                                                                                            placeholder={fu.placeholder || (hasRange ? `${fuMin}–${fuMax}` : '')}
+                                                                                            inputMode={inputType === 'number' || isLowest ? 'decimal' : 'text'}
+                                                                                            placeholder={fu.placeholder || (hasRange ? `${fuMin}–${effectiveMax}` : '')}
                                                                                             value={followUpAnswers[fuKey] || ''}
                                                                                             onKeyDown={(e) => {
-                                                                                                if (fu.type === 'number') {
+                                                                                                if (inputType === 'number' || isLowest) {
                                                                                                     if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) e.preventDefault();
                                                                                                 }
                                                                                                 if (e.key === 'Enter') { e.preventDefault(); if (isValid && !isSubmitting) handleNext(); }
                                                                                             }}
                                                                                             onChange={(e) => {
-                                                                                                const raw = e.target.value;
-                                                                                                if (fu.type === 'number' && !/^\d*\.?\d*$/.test(raw)) return;
+                                                                                                let raw = e.target.value;
+                                                                                                if ((inputType === 'number' || isLowest) && !/^\d*\.?\d*$/.test(raw)) return;
+                                                                                                // Clamp to range for all number-like types
+                                                                                                if (raw && (inputType === 'number' || isLowest)) {
+                                                                                                    const num = parseFloat(raw);
+                                                                                                    if (!isNaN(effectiveMax) && num > effectiveMax) raw = String(effectiveMax);
+                                                                                                    if (!isNaN(fuMin) && num < fuMin) raw = String(fuMin);
+                                                                                                }
                                                                                                 const newFu = { ...followUpAnswers, [fuKey]: raw };
                                                                                                 setFollowUpAnswers(newFu);
                                                                                                 // Assemble combined answer: "IELTS | Score: 7.5 | Min Band: 6"
@@ -777,7 +789,7 @@ export default function ApplyForm() {
                                                                                             style={{ '--tw-ring-color': formConfig.theme_color } as any}
                                                                                         />
                                                                                         {hasRange && (
-                                                                                            <span className="absolute right-2 top-8 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full pointer-events-none">{fuMin}–{fuMax}</span>
+                                                                                            <span className="absolute right-2 top-8 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full pointer-events-none">{fuMin}–{effectiveMax}</span>
                                                                                         )}
                                                                                     </div>
                                                                                 );

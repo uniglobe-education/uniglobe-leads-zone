@@ -77,8 +77,8 @@ export async function pushLeadToSheet(lead: any, form: any) {
     // ── Base lead data (non-question fields) ─────────────────────────────
     const leadData: Record<string, string> = {
         'id': lead.lead_id || '',
-        'createdtime': new Date(lead.createdAt).toISOString(),
-        'createdat': new Date(lead.createdAt).toISOString(),
+        'createdtime': new Date(lead.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' }),
+        'createdat': new Date(lead.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' }),
         'adid': lead.ad_id || '',
         'adname': lead.ad_name || form.form_name || '',
         'adsetid': lead.adset_id || '',

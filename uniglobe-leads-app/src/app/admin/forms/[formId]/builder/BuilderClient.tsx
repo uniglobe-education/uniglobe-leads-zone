@@ -14,6 +14,7 @@ type Question = {
     placeholder: string;
     help_text: string;
     sheet_column: string;
+    enabled: boolean;
 };
 
 export default function FormBuilderClient({ form, initialQuestions }: { form: any, initialQuestions: any[] }) {
@@ -56,7 +57,8 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
             options: q.options || '',
             placeholder: q.placeholder || '',
             help_text: q.help_text || '',
-            sheet_column: q.sheet_column || ''
+            sheet_column: q.sheet_column || '',
+            enabled: q.enabled !== false,
         }))
     );
 
@@ -72,7 +74,8 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                 options: '',
                 placeholder: '',
                 help_text: '',
-                sheet_column: ''
+                sheet_column: '',
+                enabled: true,
             }
         ]);
     };
@@ -82,7 +85,11 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
     };
 
     const removeQuestion = (id: string) => {
-        setQuestions(questions.filter(q => q.id !== id));
+        setQuestions(questions.map(q => q.id === id ? { ...q, enabled: false } : q));
+    };
+
+    const restoreQuestion = (id: string) => {
+        setQuestions(questions.map(q => q.id === id ? { ...q, enabled: true } : q));
     };
 
     const moveQuestion = (index: number, direction: 'up' | 'down') => {
@@ -167,7 +174,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                         </div>
                     ) : (
                         questions.map((q, i) => (
-                            <div key={q.id} className="bg-slate-50 border border-slate-200 rounded-xl p-5 relative group">
+                            <div key={q.id} className={`border rounded-xl p-5 relative group transition-all duration-300 ${q.enabled ? 'bg-slate-50 border-slate-200' : 'bg-red-50/50 border-red-200/60 opacity-50'}`}>
 
                                 {/* Reorder Controls */}
                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -177,26 +184,38 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
 
                                 <div className="flex justify-between items-start mb-4 pl-6">
                                     <div className="flex items-center gap-3 flex-1">
-                                        <span className="w-8 h-8 rounded-full bg-[#0A369D] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                        <span className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 ${q.enabled ? 'bg-[#0A369D]' : 'bg-red-300'}`}>
                                             {i + 1}
                                         </span>
+                                        {!q.enabled && <span className="text-[10px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">DISABLED</span>}
                                         <input
                                             type="text"
                                             value={q.label}
                                             onChange={(e) => updateQuestion(q.id, 'label', e.target.value)}
                                             placeholder="Question Label (e.g. Full Name)"
-                                            className="text-lg font-bold text-[#1E293B] bg-transparent border-b border-transparent hover:border-slate-300 focus:border-[#0A369D] focus:outline-none px-1 py-0.5 w-full"
+                                            className={`text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-[#0A369D] focus:outline-none px-1 py-0.5 w-full ${q.enabled ? 'text-[#1E293B]' : 'text-slate-400 line-through'}`}
+                                            disabled={!q.enabled}
                                         />
                                     </div>
-                                    <button
-                                        onClick={() => removeQuestion(q.id)}
-                                        className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors ml-4 shrink-0"
-                                        title="Delete Question"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
+                                    {q.enabled ? (
+                                        <button
+                                            onClick={() => removeQuestion(q.id)}
+                                            className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors ml-4 shrink-0"
+                                            title="Disable Question"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => restoreQuestion(q.id)}
+                                            className="text-emerald-500 hover:text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors ml-4 shrink-0 text-xs font-bold"
+                                            title="Restore Question"
+                                        >
+                                            ↩ Restore
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-14">
@@ -242,51 +261,124 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                     )}
 
                                     {/* ✨ Smart Follow-ups — only for MCQ */}
-                                    {q.type === 'mcq' && (
-                                        <div className="md:col-span-2 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-sm font-bold text-indigo-700">✨ Smart Follow-ups</span>
-                                                <span className="text-[10px] text-indigo-400 bg-indigo-100 px-2 py-0.5 rounded-full font-semibold">optional</span>
+                                    {q.type === 'mcq' && (() => {
+                                        // Parse existing follow-up config from help_text
+                                        let followConfig: Record<string, { label: string; type: string; range?: string }[]> = {};
+                                        try {
+                                            if (q.help_text?.trim().startsWith('{')) followConfig = JSON.parse(q.help_text);
+                                        } catch { }
+
+                                        const opts = q.options?.split('|').map(o => o.trim()).filter(Boolean) || [];
+
+                                        const updateFollowConfig = (newConfig: typeof followConfig) => {
+                                            updateQuestion(q.id, 'help_text', JSON.stringify(newConfig, null, 2));
+                                        };
+
+                                        return (
+                                            <div className="md:col-span-2 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <span className="text-sm font-bold text-indigo-700">✨ Smart Follow-ups</span>
+                                                    <span className="text-[10px] text-indigo-400 bg-indigo-100 px-2 py-0.5 rounded-full font-semibold">per option</span>
+                                                </div>
+                                                {opts.length === 0 ? (
+                                                    <p className="text-xs text-indigo-400">Add options above first, then configure follow-ups per option.</p>
+                                                ) : (
+                                                    <div className="flex flex-col gap-3">
+                                                        {opts.map(opt => {
+                                                            const fups = followConfig[opt] || [];
+                                                            const hasFollowUps = fups.length > 0;
+                                                            return (
+                                                                <div key={opt} className={`rounded-lg border p-3 transition-colors ${hasFollowUps ? 'bg-white border-indigo-300' : 'bg-indigo-50/50 border-indigo-100'}`}>
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <span className={`text-sm font-bold ${hasFollowUps ? 'text-indigo-700' : 'text-slate-500'}`}>{opt}</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newConfig = { ...followConfig };
+                                                                                newConfig[opt] = [...fups, { label: 'Score?', type: 'number', range: '0|100' }];
+                                                                                updateFollowConfig(newConfig);
+                                                                            }}
+                                                                            className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-100 hover:bg-indigo-200 px-2.5 py-1 rounded-md transition-colors"
+                                                                        >
+                                                                            + Add Follow-up
+                                                                        </button>
+                                                                    </div>
+                                                                    {fups.map((fu, fi) => (
+                                                                        <div key={fi} className="flex items-end gap-2 mb-2 ml-3 pl-3 border-l-2 border-indigo-200">
+                                                                            <div className="flex-1">
+                                                                                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5 uppercase">Label</label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={fu.label}
+                                                                                    onChange={e => {
+                                                                                        const newConfig = { ...followConfig };
+                                                                                        newConfig[opt] = [...fups];
+                                                                                        newConfig[opt][fi] = { ...fu, label: e.target.value };
+                                                                                        updateFollowConfig(newConfig);
+                                                                                    }}
+                                                                                    className="w-full p-1.5 border border-slate-300 rounded text-sm text-slate-800 bg-white focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                                                    placeholder="e.g. Overall Score?"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="w-24">
+                                                                                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5 uppercase">Type</label>
+                                                                                <select
+                                                                                    value={fu.type}
+                                                                                    onChange={e => {
+                                                                                        const newConfig = { ...followConfig };
+                                                                                        newConfig[opt] = [...fups];
+                                                                                        newConfig[opt][fi] = { ...fu, type: e.target.value };
+                                                                                        updateFollowConfig(newConfig);
+                                                                                    }}
+                                                                                    className="w-full p-1.5 border border-slate-300 rounded text-sm text-slate-800 bg-white focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                                                >
+                                                                                    <option value="number">Number</option>
+                                                                                    <option value="lowestValue">Lowest Value (≤ above)</option>
+                                                                                    <option value="text">Text</option>
+                                                                                    <option value="dropdown">Dropdown</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div className="w-20">
+                                                                                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5 uppercase">Range</label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={fu.range || ''}
+                                                                                    onChange={e => {
+                                                                                        const newConfig = { ...followConfig };
+                                                                                        newConfig[opt] = [...fups];
+                                                                                        newConfig[opt][fi] = { ...fu, range: e.target.value };
+                                                                                        updateFollowConfig(newConfig);
+                                                                                    }}
+                                                                                    className="w-full p-1.5 border border-slate-300 rounded text-sm font-mono text-slate-800 bg-white focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                                                    placeholder="0|9"
+                                                                                />
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const newConfig = { ...followConfig };
+                                                                                    newConfig[opt] = fups.filter((_, idx) => idx !== fi);
+                                                                                    if (newConfig[opt].length === 0) delete newConfig[opt];
+                                                                                    updateFollowConfig(newConfig);
+                                                                                }}
+                                                                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors shrink-0"
+                                                                                title="Remove follow-up"
+                                                                            >
+                                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                    {!hasFollowUps && (
+                                                                        <p className="text-[10px] text-slate-400 ml-3">No follow-ups — selecting this option will auto-advance.</p>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <p className="text-xs text-indigo-600 mb-3 leading-relaxed">
-                                                Add contextual sub-questions per option. Each selected option shows its own follow-up inputs inline. The final answer is combined into one DB column e.g. <code className="bg-indigo-100 rounded px-1">IELTS | Score: 7.5 | Min Band: 6</code>
-                                            </p>
-                                            <label className="block text-xs font-semibold text-indigo-600 mb-1 uppercase tracking-wider">Follow-up Config (JSON)</label>
-                                            <textarea
-                                                value={q.help_text || ''}
-                                                onChange={(e) => updateQuestion(q.id, 'help_text', e.target.value)}
-                                                rows={6}
-                                                placeholder={`Leave blank for no follow-ups, or paste JSON like:\n{\n  "IELTS": [\n    {"label": "Overall Score?", "type": "number", "range": "0|9"},\n    {"label": "Min Band?", "type": "number", "range": "0|9"}\n  ],\n  "PTE": [\n    {"label": "PTE Score?", "type": "number", "range": "10|90"}\n  ]\n}`}
-                                                className={`w-full p-2.5 border rounded-lg focus:ring-2 outline-none text-xs font-mono text-slate-800 resize-y ${q.help_text?.trim().startsWith('{')
-                                                    ? (() => { try { JSON.parse(q.help_text); return 'border-emerald-300 bg-white focus:ring-emerald-400'; } catch { return 'border-red-300 bg-red-50 focus:ring-red-400'; } })()
-                                                    : 'border-indigo-200 bg-white focus:ring-indigo-400'
-                                                    }`}
-                                            />
-                                            {/* Live JSON validation feedback */}
-                                            {q.help_text?.trim().startsWith('{') && (() => {
-                                                try {
-                                                    JSON.parse(q.help_text);
-                                                    return <p className="mt-1 text-xs font-semibold text-emerald-600">✓ Valid JSON — follow-ups will work</p>;
-                                                } catch (e: any) {
-                                                    return <p className="mt-1 text-xs font-semibold text-red-600">✗ Invalid JSON: {e.message}</p>;
-                                                }
-                                            })()}
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const opts = q.options?.split('|').map(o => o.trim()).filter(Boolean) || ['Option A', 'Option B'];
-                                                    const template: Record<string, any[]> = {};
-                                                    opts.forEach(opt => {
-                                                        template[opt] = [{ "label": "Score?", "type": "number", "range": "0|100" }];
-                                                    });
-                                                    updateQuestion(q.id, 'help_text', JSON.stringify(template, null, 2));
-                                                }}
-                                                className="mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
-                                            >
-                                                Generate template from current options
-                                            </button>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     <div className="md:col-span-2 flex gap-4 mt-2 items-center">
                                         <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">

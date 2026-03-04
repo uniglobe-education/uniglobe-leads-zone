@@ -76,7 +76,7 @@ export default async function LeadsViewPage({ params }: { params: Promise<{ form
                                         return (
                                             <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-4 text-sm text-slate-600 font-medium">
-                                                    {new Date(lead.createdAt).toLocaleDateString()} <span className="text-slate-400 text-xs">{new Date(lead.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    {new Date(lead.createdAt).toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' })} <span className="text-slate-400 text-xs">{new Date(lead.createdAt).toLocaleTimeString('en-GB', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit' })}</span>
                                                 </td>
                                                 <td className="p-4 text-xs font-mono text-slate-400">
                                                     {lead.lead_id}
