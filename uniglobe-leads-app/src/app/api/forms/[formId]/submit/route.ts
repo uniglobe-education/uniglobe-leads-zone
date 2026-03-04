@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendFacebookCapiEvent } from '@/lib/facebookCapi';
 import { reverseGeocodeCity } from '@/lib/reverseGeocode';
-
+import { syncLeadsToSheets } from '@/lib/syncSheets';
 
 export async function POST(
     request: Request,
@@ -106,33 +106,26 @@ export async function POST(
             return updated;
         });
 
-        // Fire & Forget: Try to sync right away for instantaneous feeling
-        // Direct function call — no HTTP self-fetch needed (works in Docker)
-        try {
-            const { syncLeadsToSheets } = await import('@/lib/syncSheets');
-            syncLeadsToSheets().catch(() => { });
-        } catch (e) { }
-
-        // Fire & Forget: Reverse geocode GPS coords → city, then update DB
-        // Runs asynchronously so it never blocks the form submission response.
+        // Step 1: Reverse geocode GPS → city (await this so city is in DB before sheet push)
         if (user_lat != null && user_lon != null) {
-            (async () => {
-                try {
-                    const lat = parseFloat(user_lat);
-                    const lon = parseFloat(user_lon);
-                    if (!isNaN(lat) && !isNaN(lon)) {
-                        const geocodedCity = await reverseGeocodeCity(lat, lon);
-                        if (geocodedCity) {
-                            await prisma.lead.update({
-                                where: { id: updatedLead.id },
-                                data: { city: geocodedCity },
-                            });
-                            console.log(`[GEO] Lead ${updatedLead.lead_id} city set to: ${geocodedCity}`);
-                        }
+            try {
+                const lat = parseFloat(user_lat);
+                const lon = parseFloat(user_lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    const geocodedCity = await reverseGeocodeCity(lat, lon);
+                    if (geocodedCity) {
+                        await prisma.lead.update({
+                            where: { id: updatedLead.id },
+                            data: { city: geocodedCity },
+                        });
+                        console.log(`[GEO] Lead ${updatedLead.lead_id} city set to: ${geocodedCity}`);
                     }
-                } catch (e) { /* silent */ }
-            })();
+                }
+            } catch (e) { /* silent */ }
         }
+
+        // Step 2: Fire & Forget sync to Google Sheets (city is now in DB)
+        syncLeadsToSheets().catch(() => { });
 
         // Fire & Forget: Send server-side Lead event to Facebook Conversions API
         sendFacebookCapiEvent({ ...updatedLead, form: lead.form }, request.headers).catch(() => { });

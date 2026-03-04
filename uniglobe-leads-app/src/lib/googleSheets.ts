@@ -35,11 +35,11 @@ export async function pushLeadToSheet(lead: any, form: any) {
     });
 
     // Build reverse map: normalized sheet_column → [question keys]
-    // This lets multiple questions merge their answers into one sheet column
+    // ONLY for questions with an explicit sheet_column set by admin
     const columnToKeys: Record<string, string[]> = {};
     for (const q of formQuestions) {
-        const target = q.sheet_column?.trim() || q.key; // fallback to question key
-        const normTarget = normalizeHeader(target);
+        if (!q.sheet_column?.trim()) continue; // skip — no explicit mapping
+        const normTarget = normalizeHeader(q.sheet_column.trim());
         if (!columnToKeys[normTarget]) columnToKeys[normTarget] = [];
         columnToKeys[normTarget].push(q.key);
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { syncLeadsToSheets } from '@/lib/syncSheets';
 
 
 /**
@@ -61,8 +62,7 @@ export async function PATCH(
                     await prisma.sheetPushJob.create({
                         data: { leadId: lead.id, status: 'PENDING' },
                     });
-                    // Fire & forget sync — direct call, no HTTP self-fetch
-                    const { syncLeadsToSheets } = await import('@/lib/syncSheets');
+                    // Fire & forget sync — direct call
                     syncLeadsToSheets().catch(() => { });
                 }
             } catch { /* unique constraint — job already exists */ }
