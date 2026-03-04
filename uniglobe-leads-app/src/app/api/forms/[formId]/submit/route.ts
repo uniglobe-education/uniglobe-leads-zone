@@ -93,14 +93,16 @@ export async function POST(
                 }
             });
 
-            // Enqueue job if global target sheet exists (upsert in case draft already created one)
+            // Enqueue sheet push job (but don't reset if already pushed successfully)
             const globalSetting = await tx.globalSetting.findFirst();
-            if (globalSetting?.master_google_sheet_id) {
-                await tx.sheetPushJob.upsert({
-                    where: { leadId: updated.id },
-                    create: { leadId: updated.id, status: 'PENDING' },
-                    update: { status: 'PENDING', attempts: 0, lastError: null },
-                });
+            if (globalSetting?.master_google_sheet_id && !updated.pushed_to_sheet) {
+                const existingJob = await tx.sheetPushJob.findUnique({ where: { leadId: updated.id } });
+                if (!existingJob) {
+                    await tx.sheetPushJob.create({ data: { leadId: updated.id, status: 'PENDING' } });
+                } else if (existingJob.status === 'FAILED') {
+                    await tx.sheetPushJob.update({ where: { id: existingJob.id }, data: { status: 'PENDING', attempts: 0, lastError: null } });
+                }
+                // If SUCCESS — do nothing, already pushed
             }
 
             return updated;
