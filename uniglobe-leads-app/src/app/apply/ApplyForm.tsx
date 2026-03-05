@@ -746,6 +746,9 @@ export default function ApplyForm() {
                                                                                 const effectiveMax = isLowest && !isNaN(prevVal) ? prevVal : fuMax;
                                                                                 const hasRange = !isNaN(fuMin) && !isNaN(effectiveMax);
                                                                                 const inputType = isLowest ? 'number' : fu.type;
+                                                                                // For text follow-ups, range is a single number = max chars
+                                                                                const isTextType = fu.type === 'text';
+                                                                                const textMaxChars = isTextType && fu.range && /^\d+$/.test(fu.range.trim()) ? parseInt(fu.range.trim()) : undefined;
                                                                                 return (
                                                                                     <div key={fi} className="relative">
                                                                                         <label className="block text-xs font-semibold text-slate-500 mb-1">{fu.label}</label>
@@ -753,8 +756,9 @@ export default function ApplyForm() {
                                                                                             autoFocus={fi === 0}
                                                                                             type="text"
                                                                                             inputMode={inputType === 'number' || isLowest ? 'decimal' : 'text'}
-                                                                                            placeholder={fu.placeholder || (hasRange ? `${fuMin}–${effectiveMax}` : '')}
+                                                                                            placeholder={fu.placeholder || (isTextType ? '' : (hasRange ? `${fuMin}–${effectiveMax}` : ''))}
                                                                                             value={followUpAnswers[fuKey] || ''}
+                                                                                            maxLength={textMaxChars}
                                                                                             onKeyDown={(e) => {
                                                                                                 if (inputType === 'number' || isLowest) {
                                                                                                     if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) e.preventDefault();
@@ -783,8 +787,11 @@ export default function ApplyForm() {
                                                                                             className="w-full px-3 py-2 rounded-lg border-2 border-slate-100 bg-white text-slate-800 font-bold text-[15px] outline-none focus:ring-2 placeholder:text-slate-400 placeholder:font-medium transition-all hover:border-slate-300"
                                                                                             style={{ '--tw-ring-color': formConfig.theme_color } as any}
                                                                                         />
-                                                                                        {hasRange && (
+                                                                                        {hasRange && !isTextType && (
                                                                                             <span className="absolute right-2 top-8 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full pointer-events-none">{fuMin}–{effectiveMax}</span>
+                                                                                        )}
+                                                                                        {textMaxChars && (
+                                                                                            <span className="absolute right-2 top-8 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full pointer-events-none">{(followUpAnswers[fuKey] || '').length}/{textMaxChars}</span>
                                                                                         )}
                                                                                     </div>
                                                                                 );

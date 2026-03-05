@@ -364,7 +364,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                                                                 </select>
                                                                             </div>
                                                                             <div className="w-20">
-                                                                                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5 uppercase">Range</label>
+                                                                                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5 uppercase">{fu.type === 'text' ? 'Max Chars' : 'Range'}</label>
                                                                                 <input
                                                                                     type="text"
                                                                                     value={fu.range || ''}
@@ -375,7 +375,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                                                                         updateFollowConfig(newConfig);
                                                                                     }}
                                                                                     className="w-full p-1.5 border border-slate-300 rounded text-sm font-mono text-slate-800 bg-white focus:ring-1 focus:ring-indigo-400 outline-none"
-                                                                                    placeholder="0|9"
+                                                                                    placeholder={fu.type === 'text' ? '50' : '0|9'}
                                                                                 />
                                                                             </div>
                                                                             <button
