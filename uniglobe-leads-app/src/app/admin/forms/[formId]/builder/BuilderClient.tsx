@@ -270,6 +270,21 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
                                         </div>
                                     )}
 
+                                    {/* ✏️ Max characters — for text inputs */}
+                                    {['short_text', 'paragraph'].includes(q.type) && (
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Max Characters</label>
+                                            <input
+                                                type="number"
+                                                value={q.help_text && /^\d+$/.test(q.help_text.trim()) ? q.help_text.trim() : ''}
+                                                onChange={(e) => updateQuestion(q.id, 'help_text', e.target.value.replace(/\D/g, ''))}
+                                                placeholder={q.type === 'short_text' ? '50' : '300'}
+                                                className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] outline-none bg-white text-sm text-slate-800"
+                                            />
+                                            <p className="text-[10px] text-slate-400 mt-1">Leave blank for no limit. Suggested: {q.type === 'short_text' ? '30–80' : '200–500'}</p>
+                                        </div>
+                                    )}
+
                                     {/* ✨ Smart Follow-ups — only for MCQ */}
                                     {q.type === 'mcq' && (() => {
                                         // Parse existing follow-up config from help_text

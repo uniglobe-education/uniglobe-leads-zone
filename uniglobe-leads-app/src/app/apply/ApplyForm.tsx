@@ -954,6 +954,7 @@ export default function ApplyForm() {
                                                             }}
                                                             placeholder={currentQ.placeholder || ''}
                                                             value={answers[currentQ.key] || ''}
+                                                            maxLength={currentQ.help_text && /^\d+$/.test(currentQ.help_text.trim()) ? parseInt(currentQ.help_text.trim()) : undefined}
                                                             onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
                                                             className={`w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[16px] sm:text-[17px] outline-none transition-all shadow-sm border-slate-100 hover:border-slate-300 focus:ring-4 placeholder:text-slate-400 placeholder:font-medium`}
                                                             onBlur={() => setTouchedFields({ ...touchedFields, [currentQ.key]: true })}
@@ -965,6 +966,12 @@ export default function ApplyForm() {
                                                             }}
                                                         />
                                                     )}
+                                                    {/* Character counter for text inputs */}
+                                                    {['short_text'].includes(currentQ.type) && currentQ.help_text && /^\d+$/.test(currentQ.help_text.trim()) && (
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full pointer-events-none">
+                                                            {(answers[currentQ.key] || '').length}/{currentQ.help_text.trim()}
+                                                        </span>
+                                                    )}
                                                     {!isValid && currentQ.type === 'phone' && touchedFields[currentQ.key] && phoneErrorMsg && (
                                                         <p className="text-red-500 text-sm font-semibold mt-2 px-1 animate-in slide-in-from-top-1">{phoneErrorMsg}</p>
                                                     )}
@@ -972,21 +979,29 @@ export default function ApplyForm() {
                                             )}
 
                                             {currentQ.type === 'paragraph' && (
-                                                <textarea
-                                                    autoFocus
-                                                    placeholder={currentQ.placeholder || ''}
-                                                    value={answers[currentQ.key] || ''}
-                                                    onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
-                                                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all min-h-30 sm:min-h-35 resize-none shadow-sm hover:border-slate-300 focus:ring-4 placeholder:text-slate-400 placeholder:font-medium"
-                                                    onFocus={(e) => {
-                                                        setTimeout(() => {
-                                                            const container = e.target.closest('.bg-white\\/95');
-                                                            if (container) {
-                                                                container.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                                                            }
-                                                        }, 300);
-                                                    }}
-                                                />
+                                                <div className="relative">
+                                                    <textarea
+                                                        autoFocus
+                                                        placeholder={currentQ.placeholder || ''}
+                                                        value={answers[currentQ.key] || ''}
+                                                        maxLength={currentQ.help_text && /^\d+$/.test(currentQ.help_text.trim()) ? parseInt(currentQ.help_text.trim()) : undefined}
+                                                        onChange={(e) => setAnswers({ ...answers, [currentQ.key]: e.target.value })}
+                                                        className="w-full px-4 sm:px-5 py-3 sm:py-4 border-2 sm:border-[2.5px] border-slate-100 rounded-xl sm:rounded-2xl bg-white text-slate-800 font-bold text-[15px] sm:text-[16px] outline-none transition-all min-h-30 sm:min-h-35 resize-none shadow-sm hover:border-slate-300 focus:ring-4 placeholder:text-slate-400 placeholder:font-medium"
+                                                        onFocus={(e) => {
+                                                            setTimeout(() => {
+                                                                const container = e.target.closest('.bg-white\\/95');
+                                                                if (container) {
+                                                                    container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                                                                }
+                                                            }, 300);
+                                                        }}
+                                                    />
+                                                    {currentQ.help_text && /^\d+$/.test(currentQ.help_text.trim()) && (
+                                                        <span className="absolute right-3 bottom-3 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full pointer-events-none">
+                                                            {(answers[currentQ.key] || '').length}/{currentQ.help_text.trim()}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
