@@ -23,6 +23,7 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
 
     // Form Design Settings State
     const [settings, setSettings] = useState({
+        form_name: form.form_name || '',
         theme_color: form.theme_color || '#0A369D',
         background_style: form.background_style || 'solid',
         success_title: form.success_title || 'Thanks!',
@@ -121,8 +122,17 @@ export default function FormBuilderClient({ form, initialQuestions }: { form: an
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-150">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-[#1E293B]">Builder: {form.form_name}</h2>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-slate-400">Builder:</span>
+                        <input
+                            type="text"
+                            value={settings.form_name}
+                            onChange={e => setSettings({ ...settings, form_name: e.target.value })}
+                            className="text-2xl font-bold text-[#1E293B] bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-[#0A369D] outline-none px-1 py-0.5 flex-1 min-w-0"
+                            placeholder="Form Name"
+                        />
+                    </div>
                     <p className="text-slate-500 mt-1">Configure questions and the student UI experience.</p>
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">

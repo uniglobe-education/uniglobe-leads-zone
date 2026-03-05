@@ -58,6 +58,7 @@ export async function updateFormSettings(formId: string, data: any) {
     await prisma.form.update({
         where: { id: formId },
         data: {
+            form_name: data.form_name,
             theme_color: data.theme_color,
             background_style: data.background_style,
             success_title: data.success_title,
