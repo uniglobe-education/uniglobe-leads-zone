@@ -82,13 +82,21 @@ export default function ApplyForm() {
                     urlParams['landing_page'] = window.location.href.split('?')[0];
                 }
 
-                // Fetch IP geo (runs immediately, NOT waiting for GPS)
+                // Fetch IP geo (runs immediately)
                 let fetchedGeo: any = null;
                 try {
                     const geoRes = await fetch('/api/geo');
                     if (geoRes.ok) {
                         const geoData = await geoRes.json();
-                        if (geoData.success) { fetchedGeo = geoData; setGeo(geoData); }
+                        if (geoData.success) {
+                            fetchedGeo = geoData;
+                            setGeo(geoData);
+                            // Use IP-based lat/lon for office matching
+                            if (geoData.lat != null && geoData.lon != null) {
+                                setUserLat(geoData.lat);
+                                setUserLon(geoData.lon);
+                            }
+                        }
                     }
                 } catch (e) { }
 
@@ -137,48 +145,35 @@ export default function ApplyForm() {
             }
         };
 
-        // GPS runs in background — no timeout, no blocking
-        // When coords arrive they trigger a separate reactive useEffect below
-        if (typeof navigator !== 'undefined' && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setUserLat(pos.coords.latitude);
-                    setUserLon(pos.coords.longitude);
-                },
-                () => { /* denied — IP geo remains */ }
-                // No timeout option — wait as long as needed
-            );
-        }
+        // GPS disabled — city determined by IP geo only
+        // if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        //     navigator.geolocation.getCurrentPosition(
+        //         (pos) => {
+        //             setUserLat(pos.coords.latitude);
+        //             setUserLon(pos.coords.longitude);
+        //         },
+        //         () => { /* denied — IP geo remains */ }
+        //     );
+        // }
 
         initForm();
     }, [formId, searchParams]);
 
-    /**
-     * GPS REACTIVE OVERRIDE
-     * When GPS coordinates arrive (even after IP geo has already pre-filled),
-     * check if the phone field still only has a code prefix (user hasn't typed digits yet).
-     * If so, swap in the GPS-derived code. This ensures GPS ALWAYS wins over IP geo.
-     */
-    useEffect(() => {
-        if (userLat == null || userLon == null) return;
-        const code = getCallingCodeFromCoords(userLat, userLon);
-        if (!code) return;
-
-        const phoneQ = questions.find((q: any) => q.type === 'phone');
-        if (!phoneQ) return;
-
-        setAnswers(prev => {
-            const current = (prev[phoneQ.key] || '').trim();
-            // Only override if the field is empty or contains just a country code prefix (no real digits)
-            // A "just prefix" value looks like: "+880 " or "+61 " — splits to max 2 parts with empty second
-            const parts = current.split(' ');
-            const hasRealDigits = parts.length > 1 && parts[1].replace(/\D/g, '').length > 0;
-            if (!hasRealDigits) {
-                return { ...prev, [phoneQ.key]: code + ' ' };
-            }
-            return prev; // User typed real digits — don't override
-        });
-    }, [userLat, userLon, questions]);
+    // GPS REACTIVE OVERRIDE — disabled (city from IP only)
+    // useEffect(() => {
+    //     if (userLat == null || userLon == null) return;
+    //     const code = getCallingCodeFromCoords(userLat, userLon);
+    //     if (!code) return;
+    //     const phoneQ = questions.find((q: any) => q.type === 'phone');
+    //     if (!phoneQ) return;
+    //     setAnswers(prev => {
+    //         const current = (prev[phoneQ.key] || '').trim();
+    //         const parts = current.split(' ');
+    //         const hasRealDigits = parts.length > 1 && parts[1].replace(/\D/g, '').length > 0;
+    //         if (!hasRealDigits) return { ...prev, [phoneQ.key]: code + ' ' };
+    //         return prev;
+    //     });
+    // }, [userLat, userLon, questions]);
 
     // When success screen shows, fetch offices and find the right one
     useEffect(() => {
