@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { PhoneNumberUtil } from 'google-libphonenumber';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -589,10 +590,14 @@ export default function ApplyForm() {
                 {/* Product Image Hero — shown like Meta leads background when configured */}
                 {formConfig.product_image_url && (
                     <div className="w-full max-w-md mb-4 sm:mb-5 rounded-2xl overflow-hidden shadow-lg shadow-slate-300/40 animate-in fade-in duration-500 relative">
-                        <img
+                        <Image
                             src={formConfig.product_image_url}
                             alt={formConfig.form_name}
                             className="w-full h-auto object-cover max-h-55 sm:max-h-65"
+                            width={1200}
+                            height={780}
+                            unoptimized
+                            priority
                         />
                         {/* Gradient overlay for text readability */}
                         <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
