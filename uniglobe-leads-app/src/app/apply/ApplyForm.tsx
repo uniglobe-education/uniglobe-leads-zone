@@ -611,13 +611,13 @@ export default function ApplyForm() {
 
                     {/* Logo — oval white container straddling image/glass boundary */}
                     <div className="absolute left-1/2 -translate-x-1/2 z-30" style={{ top: 'calc(7rem - 30px)' }}>
-                        <div className="w-[90px] h-[90px] sm:w-[100px] sm:h-[100px] rounded-full bg-white shadow-lg shadow-slate-300/50 flex items-center justify-center ring-4 ring-white/80">
+                        <div className="w-22.5 h-22.5 sm:w-25 sm:h-25 rounded-full bg-white shadow-lg shadow-slate-300/50 flex items-center justify-center ring-4 ring-white/80">
                             <Image
                                 src="/logo.png"
                                 alt="UniGlobe Education"
                                 width={70}
                                 height={70}
-                                className="object-contain sm:w-[80px] sm:h-[80px]"
+                                className="object-contain sm:w-20 sm:h-20"
                                 priority
                             />
                         </div>
