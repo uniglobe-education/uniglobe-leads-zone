@@ -592,10 +592,10 @@ export default function ApplyForm() {
                         <img
                             src={formConfig.product_image_url}
                             alt={formConfig.form_name}
-                            className="w-full h-auto object-cover max-h-[220px] sm:max-h-[260px]"
+                            className="w-full h-auto object-cover max-h-55 sm:max-h-65"
                         />
                         {/* Gradient overlay for text readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     </div>
                 )}
 
