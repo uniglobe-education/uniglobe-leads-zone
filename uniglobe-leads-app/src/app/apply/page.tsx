@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import Image from 'next/image';
 import ApplyForm from './ApplyForm';
 
 export default function ApplyPage() {
@@ -19,18 +18,6 @@ export default function ApplyPage() {
             {/* Main Container - Framed like a polished app */}
             <div className="w-full max-w-[480px] flex flex-col items-center relative z-10 sm:my-auto">
 
-                {/* Header Branding */}
-                <div className="text-center mb-6 sm:mb-8 flex flex-col items-center w-full relative">
-                    <div className="relative w-[260px] h-[75px] drop-shadow-sm transition-transform hover:scale-[1.02] duration-300">
-                        <Image
-                            src="/logo.png"
-                            alt="UniGlobe Education Logo"
-                            fill
-                            className="object-contain"
-                            priority
-                        />
-                    </div>
-                </div>
 
                 {/* Suspense boundary for useSearchParams inside ApplyForm */}
                 <Suspense fallback={

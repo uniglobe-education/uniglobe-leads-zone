@@ -587,41 +587,54 @@ export default function ApplyForm() {
             <BackgroundAnimation style={formConfig.background_style} />
 
             <div className="w-full flex flex-col items-center z-10 relative">
-                {/* Product Image Hero — shown like Meta leads background when configured */}
-                {formConfig.product_image_url && (
-                    <div className="w-full max-w-md mb-4 sm:mb-5 rounded-2xl overflow-hidden shadow-lg shadow-slate-300/40 animate-in fade-in duration-500 relative">
+                {/* Hero Card — background image + frosted glass greeting box */}
+                <div className="w-full max-w-md mb-4 sm:mb-6 rounded-2xl overflow-hidden shadow-lg shadow-slate-300/40 animate-in fade-in duration-500 relative">
+                    {/* Background: product image or themed gradient fallback */}
+                    {formConfig.product_image_url ? (
                         <Image
                             src={formConfig.product_image_url}
                             alt={formConfig.form_name}
-                            className="w-full h-auto object-cover max-h-55 sm:max-h-65"
-                            width={1200}
-                            height={780}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            fill
                             unoptimized
                             priority
                         />
-                        {/* Gradient overlay for text readability */}
-                        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    ) : (
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ background: `linear-gradient(135deg, ${formConfig.theme_color}, ${formConfig.theme_color}CC, ${formConfig.theme_color}99)` }}
+                        />
+                    )}
+
+                    {/* Spacer for image visibility — top ~35% stays clear */}
+                    <div className="relative z-10 pt-28 sm:pt-36" />
+
+                    {/* Logo — oval white container straddling image/glass boundary */}
+                    <div className="absolute left-1/2 -translate-x-1/2 z-30" style={{ top: 'calc(7rem - 30px)' }}>
+                        <div className="w-[90px] h-[90px] sm:w-[100px] sm:h-[100px] rounded-full bg-white shadow-lg shadow-slate-300/50 flex items-center justify-center ring-4 ring-white/80">
+                            <Image
+                                src="/logo.png"
+                                alt="UniGlobe Education"
+                                width={70}
+                                height={70}
+                                className="object-contain sm:w-[80px] sm:h-[80px]"
+                                priority
+                            />
+                        </div>
                     </div>
-                )}
 
-                {/* Dynamic Form Heading */}
-                <h1
-                    className="text-[26px] sm:text-[30px] font-extrabold mb-1.5 tracking-tight text-center drop-shadow-sm px-2"
-                    style={{ color: formConfig.theme_color }}
-                >
-                    {formConfig.form_name}
-                </h1>
-
-                {/* Greeting — shown if admin has configured it */}
-                {(formConfig.greeting_headline || formConfig.greeting_body) && (
-                    <div className="w-full max-w-md mb-4 sm:mb-6 px-2 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    {/* Frosted glass greeting box — covering bottom 50-70% */}
+                    <div className="relative z-10 bg-white/85 backdrop-blur-xl border-t border-white/50 px-5 sm:px-6 pt-14 sm:pt-16 pb-5 sm:pb-6">
+                        {/* Greeting headline as the main title */}
                         {formConfig.greeting_headline && (
-                            <p className="text-[15px] sm:text-[16px] font-bold text-slate-700 mb-1.5 leading-snug">
+                            <h1 className="text-[18px] sm:text-[22px] font-extrabold tracking-tight leading-snug text-slate-800 mb-2 text-center">
                                 {formConfig.greeting_headline}
-                            </p>
+                            </h1>
                         )}
+
+                        {/* Greeting body — paragraph or list */}
                         {formConfig.greeting_body && formConfig.greeting_type === 'list' ? (
-                            <ul className="text-left inline-block space-y-1 mt-1">
+                            <ul className="space-y-1.5 mt-1">
                                 {formConfig.greeting_body.split('\n').filter(Boolean).map((item: string, i: number) => (
                                     <li key={i} className="flex items-start gap-2 text-[13px] sm:text-[14px] text-slate-600">
                                         <span className="mt-0.5 shrink-0 text-emerald-500 font-bold">✓</span>
@@ -630,14 +643,19 @@ export default function ApplyForm() {
                                 ))}
                             </ul>
                         ) : formConfig.greeting_body ? (
-                            <p className="text-[13px] sm:text-[14px] text-slate-500 leading-relaxed">
+                            <p className="text-[13px] sm:text-[14px] text-slate-500 leading-relaxed text-center">
                                 {formConfig.greeting_body}
                             </p>
                         ) : null}
-                    </div>
-                )}
 
-                <p className="text-slate-500 font-medium text-[14px] sm:text-[16px] mb-4 sm:mb-8">Takes 30–60 seconds</p>
+                        {/* Fallback: if no greeting at all, show form_name */}
+                        {!formConfig.greeting_headline && !formConfig.greeting_body && (
+                            <h1 className="text-[18px] sm:text-[22px] font-extrabold tracking-tight leading-snug text-slate-800 text-center">
+                                {formConfig.form_name}
+                            </h1>
+                        )}
+                    </div>
+                </div>
 
                 {/* Main Card */}
                 <div className="bg-white/95 backdrop-blur-md rounded-[28px] sm:rounded-4xl shadow-2xl shadow-slate-200/50 p-6 pb-20 sm:p-8 sm:px-10 w-full max-w-md min-h-87.5 sm:min-h-137.5 flex flex-col border border-white/60 relative overflow-hidden transition-all hover:shadow-slate-300/40">
