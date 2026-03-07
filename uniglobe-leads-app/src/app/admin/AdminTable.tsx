@@ -10,6 +10,12 @@ export default function AdminTable({ initialForms, globalSetting }: { initialFor
     const [editingForm, setEditingForm] = useState<any>(null);
     const [showDeleted, setShowDeleted] = useState(false);
 
+    // Duplicate modal state
+    const [duplicatingForm, setDuplicatingForm] = useState<any>(null);
+    const [dupFormName, setDupFormName] = useState('');
+    const [dupFormId, setDupFormId] = useState('');
+    const [isDuplicating, setIsDuplicating] = useState(false);
+
     // Tab loading state
     const [availableTabs, setAvailableTabs] = useState<any[]>([]);
     const [isLoadingTabs, setIsLoadingTabs] = useState(false);
@@ -224,13 +230,10 @@ export default function AdminTable({ initialForms, globalSetting }: { initialFor
                                                 </button>
                                                 <span className="text-slate-300">|</span>
                                                 <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await duplicateForm(form.id);
-                                                            window.location.reload();
-                                                        } catch (e: any) {
-                                                            alert('Error: ' + e.message);
-                                                        }
+                                                    onClick={() => {
+                                                        setDuplicatingForm(form);
+                                                        setDupFormName(`${form.form_name} (Copy)`);
+                                                        setDupFormId(`${form.form_id}_COPY_${Date.now().toString(36).toUpperCase()}`);
                                                     }}
                                                     className="text-slate-500 hover:text-blue-600 transition-colors"
                                                     title="Duplicate Form"
@@ -380,6 +383,66 @@ export default function AdminTable({ initialForms, globalSetting }: { initialFor
                                     <button type="submit" className="px-5 py-2 rounded-lg font-medium bg-[#0A369D] text-white hover:bg-blue-800">Save Changes</button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Duplicate Modal */}
+                {duplicatingForm && (
+                    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+                            <h3 className="text-xl font-bold mb-1 text-[#1E293B]">Duplicate Form</h3>
+                            <p className="text-sm text-slate-500 mb-4">Edit the name and ID for the duplicate before creating it.</p>
+                            <div className="flex flex-col gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Form Name (Header)</label>
+                                    <input
+                                        type="text"
+                                        value={dupFormName}
+                                        onChange={e => setDupFormName(e.target.value)}
+                                        placeholder="e.g. Masters Wrexham June"
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0A369D] focus:border-[#0A369D] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Unique Form ID</label>
+                                    <input
+                                        type="text"
+                                        value={dupFormId}
+                                        onChange={e => setDupFormId(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase())}
+                                        placeholder="e.g. MASTERS_WREXHAM_JUNE"
+                                        className="w-full p-3 border border-slate-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-[#0A369D] focus:border-[#0A369D] outline-none"
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1">Only letters, numbers, and underscores. This will be used in the form URL.</p>
+                                </div>
+                                <div className="flex justify-end gap-3 mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setDuplicatingForm(null); setDupFormName(''); setDupFormId(''); }}
+                                        className="px-5 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100"
+                                        disabled={isDuplicating}
+                                    >Cancel</button>
+                                    <button
+                                        type="button"
+                                        disabled={isDuplicating || !dupFormName.trim() || !dupFormId.trim()}
+                                        onClick={async () => {
+                                            setIsDuplicating(true);
+                                            try {
+                                                await duplicateForm(duplicatingForm.id, dupFormName.trim(), dupFormId.trim());
+                                                setDuplicatingForm(null);
+                                                setDupFormName('');
+                                                setDupFormId('');
+                                                window.location.reload();
+                                            } catch (e: any) {
+                                                alert('Error: ' + e.message);
+                                            } finally {
+                                                setIsDuplicating(false);
+                                            }
+                                        }}
+                                        className="px-5 py-2 rounded-lg font-medium bg-[#0A369D] text-white hover:bg-blue-800 disabled:opacity-50"
+                                    >{isDuplicating ? 'Duplicating...' : 'Duplicate'}</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

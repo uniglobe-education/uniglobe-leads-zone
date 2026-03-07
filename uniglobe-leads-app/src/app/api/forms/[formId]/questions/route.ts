@@ -37,6 +37,17 @@ export async function GET(
         success_title: form.success_title,
         success_description: form.success_description,
         whatsapp_number: form.whatsapp_number,
+        // Greeting
+        greeting_headline: form.greeting_headline,
+        greeting_body: form.greeting_body,
+        greeting_type: form.greeting_type,
+        // Images
+        product_image_url: form.product_image_url,
+        bg_image_url: form.bg_image_url,
+        // Links & location
+        facebook_page_url: form.facebook_page_url,
+        products_page_url: form.products_page_url,
+        office_location: form.office_location,
       },
       questions: form.questions,
     });

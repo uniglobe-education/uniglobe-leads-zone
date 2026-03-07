@@ -586,6 +586,19 @@ export default function ApplyForm() {
             <BackgroundAnimation style={formConfig.background_style} />
 
             <div className="w-full flex flex-col items-center z-10 relative">
+                {/* Product Image Hero — shown like Meta leads background when configured */}
+                {formConfig.product_image_url && (
+                    <div className="w-full max-w-md mb-4 sm:mb-5 rounded-2xl overflow-hidden shadow-lg shadow-slate-300/40 animate-in fade-in duration-500 relative">
+                        <img
+                            src={formConfig.product_image_url}
+                            alt={formConfig.form_name}
+                            className="w-full h-auto object-cover max-h-[220px] sm:max-h-[260px]"
+                        />
+                        {/* Gradient overlay for text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    </div>
+                )}
+
                 {/* Dynamic Form Heading */}
                 <h1
                     className="text-[26px] sm:text-[30px] font-extrabold mb-1.5 tracking-tight text-center drop-shadow-sm px-2"

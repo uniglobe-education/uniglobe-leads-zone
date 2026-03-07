@@ -73,7 +73,7 @@ export async function updateGlobalSettings(formData: FormData) {
     revalidatePath('/admin');
 }
 
-export async function duplicateForm(formId: string) {
+export async function duplicateForm(formId: string, customFormName?: string, customFormId?: string) {
     const form = await prisma.form.findUnique({
         where: { id: formId },
         include: { questions: { orderBy: { order: 'asc' } } }
@@ -81,12 +81,17 @@ export async function duplicateForm(formId: string) {
 
     if (!form) throw new Error('Form not found');
 
-    const newFormId = `${form.form_id}_COPY_${Date.now().toString(36).toUpperCase()}`;
+    const newFormId = customFormId || `${form.form_id}_COPY_${Date.now().toString(36).toUpperCase()}`;
+    const newFormName = customFormName || `${form.form_name} (Copy)`;
+
+    // Check for form_id uniqueness
+    const existingForm = await prisma.form.findUnique({ where: { form_id: newFormId } });
+    if (existingForm) throw new Error(`Form ID "${newFormId}" already exists. Please choose a different one.`);
 
     const newForm = await prisma.form.create({
         data: {
             form_id: newFormId,
-            form_name: `${form.form_name} (Copy)`,
+            form_name: newFormName,
             status: 'DRAFT',
             theme_color: form.theme_color,
             background_style: form.background_style,
