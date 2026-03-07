@@ -5,6 +5,10 @@ services:
   db:
     image: postgres:15-alpine
     container_name: uniglobe-postgres
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     restart: always
     environment:
       POSTGRES_USER: saaifshuvo
@@ -19,6 +23,10 @@ services:
   minio:
     image: minio/minio
     container_name: uniglobe-minio
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     restart: always
     command: server /data --console-address ":9001"
     environment:
@@ -37,7 +45,11 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: uniglobe-migrate
-    restart: "no" # Run once and exit — not a long-running service
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 512M # Run once and exit — not a long-running service
     command: ./node_modules/.bin/prisma db push --skip-generate --accept-data-loss
     environment:
       - DATABASE_URL=postgresql://saaifshuvo@db:5432/uniglobe_leads
@@ -54,6 +66,10 @@ services:
       dockerfile: Dockerfile.dev
     container_name: uniglobe-next-app
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
     ports:
       - "3000:3000"
     env_file:
@@ -78,6 +94,10 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: uniglobe-cloudflared
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     restart: always
     command: tunnel --config /etc/cloudflared/config.yml run
     volumes:
@@ -92,6 +112,10 @@ services:
       dockerfile: Dockerfile.dev
     container_name: uniglobe-prisma-studio
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     command: ./node_modules/.bin/prisma studio --hostname 0.0.0.0 --port 5555
     ports:
       - "5555:5555"
@@ -107,3 +131,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+
